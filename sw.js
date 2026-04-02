@@ -1,4 +1,4 @@
-const CACHE = 'diamond-stats-v11';
+const CACHE = 'diamond-stats-v12';
 const ASSETS = ['./index.html', './manifest.json', './icon.svg', './sw.js'];
 
 self.addEventListener('install', e => {

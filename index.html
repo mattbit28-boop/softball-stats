@@ -152,6 +152,11 @@
     .seg{display:flex;background:#13151F;border:1px solid var(--border);border-radius:12px;padding:3px;margin-bottom:14px}
     .segb{flex:1;padding:9px;border:none;border-radius:9px;background:none;font-size:13px;font-weight:700;color:var(--text2);cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent}
     .segb.act{background:var(--surface);color:var(--text);box-shadow:0 2px 10px rgba(0,0,0,.4)}
+    /* GM tab strip (scrollable) */
+    #gm-seg::-webkit-scrollbar{display:none}
+    .gm-tab{flex-shrink:0;padding:9px 16px;border:1.5px solid var(--border2);border-radius:22px;background:#13151F;font-size:13px;font-weight:700;color:var(--text2);cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent;transition:all .15s}
+    .gm-tab:active{opacity:.75}
+    .gm-tab.act{border-color:var(--g);background:var(--gl);color:var(--g)}
 
     /* RBI picker */
     .rbipick{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:10px}
@@ -501,12 +506,12 @@
 
   <!-- GM MODE -->
   <div id="scr-gm" class="scr">
-    <div class="seg" id="gm-seg" style="overflow-x:auto;flex-wrap:nowrap">
-      <button class="segb act" onclick="gmTab('home')" style="white-space:nowrap">Home</button>
-      <button class="segb" onclick="gmTab('book')" style="white-space:nowrap">Scorebook</button>
-      <button class="segb" onclick="gmTab('roster')" style="white-space:nowrap">Roster</button>
-      <button class="segb" onclick="gmTab('stats')" style="white-space:nowrap">Stats</button>
-      <button class="segb" onclick="gmTab('strategy')" style="white-space:nowrap">Strategy</button>
+    <div id="gm-seg" style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:0 0 6px;margin-bottom:10px">
+      <button class="gm-tab act" onclick="gmTab('home')">🏠 Home</button>
+      <button class="gm-tab" onclick="gmTab('book')">📒 Scorebook</button>
+      <button class="gm-tab" onclick="gmTab('roster')">👥 Roster</button>
+      <button class="gm-tab" onclick="gmTab('stats')">📊 Stats</button>
+      <button class="gm-tab" onclick="gmTab('strategy')">🧠 Lineup Lab</button>
     </div>
     <div id="gmContent"></div>
   </div>
@@ -2831,7 +2836,7 @@ function gmScoreTotals(game){
 
 function gmTab(tab){
   gmCurrentTab = tab;
-  document.querySelectorAll('#gm-seg .segb').forEach((b,i)=>{
+  document.querySelectorAll('#gm-seg .gm-tab').forEach((b,i)=>{
     b.classList.toggle('act', ['home','book','roster','stats','strategy'][i]===tab);
   });
   renderHeader('gm');
@@ -3694,7 +3699,7 @@ function gmStartGame(){
   saveGM();
   closeModal('modal-gm-start');
   gmCurrentTab = 'book';
-  document.querySelectorAll('#gm-seg .segb').forEach((b,i)=>{
+  document.querySelectorAll('#gm-seg .gm-tab').forEach((b,i)=>{
     b.classList.toggle('act', i===1);
   });
   renderHeader('gm');
