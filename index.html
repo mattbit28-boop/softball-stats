@@ -670,6 +670,33 @@
       <button class="scard-adj" onclick="gmInnAdj(1)">+</button>
     </div>
     <button class="btn btn-g btn-full btn-lg" onclick="gmConfirmInningEnd()">Next Inning →</button>
+    <button class="btn btn-ghost btn-full" onclick="closeModal('modal-gm-inning')" style="margin-top:8px">Cancel</button>
+  </div>
+</div>
+
+<!-- MODAL: GM PA (Plate Appearance + Runner Movement) -->
+<div id="modal-gm-pa" class="mover hide" onclick="closeModalOnBg(event,'modal-gm-pa')">
+  <div class="modal">
+    <button class="mclose" onclick="closeModal('modal-gm-pa')">✕</button>
+    <div id="gm-pa-content"></div>
+  </div>
+</div>
+
+<!-- MODAL: GM Edit Game -->
+<div id="modal-gm-edit-game" class="mover hide" onclick="closeModalOnBg(event,'modal-gm-edit-game')">
+  <div class="modal">
+    <button class="mclose" onclick="closeModal('modal-gm-edit-game')">✕</button>
+    <h2>Edit Game</h2>
+    <div class="fgrp">
+      <label class="flbl">Opponent</label>
+      <input class="finput" id="gm-edit-opponent" type="text" placeholder="Opponent name" maxlength="40" autocomplete="off">
+    </div>
+    <div class="fgrp">
+      <label class="flbl">Location (optional)</label>
+      <input class="finput" id="gm-edit-location" type="text" placeholder="e.g. Field 3" maxlength="50" autocomplete="off">
+    </div>
+    <input type="hidden" id="gm-edit-game-id">
+    <button class="btn btn-g btn-full btn-lg mt12" onclick="gmSaveEditGame()">Save Changes</button>
   </div>
 </div>
 
@@ -2310,15 +2337,319 @@ function loadGM(){
 function saveGM(){ localStorage.setItem('gm_data', JSON.stringify(gmDb)); }
 
 let gmDb = loadGM();
+// Migrate old games that have atBats but no events
+gmDb.games.forEach(g=>{
+  if(!g.events && g.atBats){
+    // Convert old atBats to events for backward compat display
+    g.events = (g.atBats||[]).map(ab=>({
+      id: ab.id||uid(), type:'pa', playerId:ab.playerId,
+      result: ab.result, inning: ab.inning||1,
+      runners:{}, count:null, details:{}
+    }));
+  }
+  if(!g.events) g.events = [];
+  if(!g.lineup) g.lineup = [];
+});
+saveGM();
+
 let gmCurrentTab = 'home';
-// Pending PA state
+// Pending PA state for the PA modal
 let gmPendingResult = null;
-let gmPendingRBIs = 0;
-let gmPendingScored = false;
+let gmPendingRunners = {};   // {playerId: 'scored'|'1B'|'2B'|'3B'|'out'}
+let gmPendingCount = '';
+let gmPendingDetails = {};
+let gmEditingEventIdx = null; // if editing an existing event
 // Lineup builder state
 let gmSelectedLineup = [];
 // Inning end pending runs counter
 let gmInnPendingRuns = 0;
+
+// ─── ENGINE: DERIVE STATE ────────────────────────────────────────────────────
+
+function gmDeriveState(game){
+  if(!game) return {inning:1, outs:0, bases:{first:null,second:null,third:null}, innings:[{us:0,them:0}], score:{us:0,them:0}, hrCount:0, nextBatterIdx:0, atBatCount:0};
+
+  let inning = 1;
+  let outs = 0;
+  let bases = {first:null, second:null, third:null};
+  let innings = [{us:0,them:0}];
+  let hrCount = 0;
+  let nextBatterIdx = 0;
+  let atBatCount = 0;
+
+  // Ensure innings array is long enough
+  while(innings.length < inning) innings.push({us:0,them:0});
+
+  for(const ev of (game.events||[])){
+    // Ensure innings array covers current inning
+    while(innings.length < inning) innings.push({us:0,them:0});
+
+    if(ev.type === 'pa'){
+      const result = ev.result;
+      const runners = ev.runners || {};
+      const batterId = ev.playerId;
+      let isHROut = false;
+
+      // HR limit check (slowpitch: 1 HR per game)
+      if(result === 'HR'){
+        if(hrCount >= 1){
+          isHROut = true;
+        } else {
+          hrCount++;
+        }
+      }
+
+      // Apply runners map to bases
+      const newBases = gmApplyRunners(bases, runners, batterId, result, isHROut);
+
+      // Count runs and outs from runners map
+      let evRuns = 0, evOuts = 0;
+      if(isHROut){
+        // HR over limit = batter out
+        evOuts = 1;
+      } else {
+        Object.values(runners).forEach(dest=>{
+          if(dest === 'scored') evRuns++;
+          if(dest === 'out') evOuts++;
+        });
+      }
+
+      // Add runs to current inning
+      while(innings.length < inning) innings.push({us:0,them:0});
+      innings[inning-1].us = (innings[inning-1].us||0) + evRuns;
+
+      bases = newBases;
+      outs += evOuts;
+      atBatCount++;
+
+      // Advance batter idx
+      if(game.lineup && game.lineup.length > 0){
+        nextBatterIdx = (nextBatterIdx + 1) % game.lineup.length;
+      }
+
+      // Check for inning over
+      if(outs >= 3){
+        inning++;
+        outs = 0;
+        bases = {first:null, second:null, third:null};
+        while(innings.length < inning) innings.push({us:0,them:0});
+      }
+
+    } else if(ev.type === 'inning_end'){
+      // Log opponent runs for this inning
+      const evInn = ev.inning || inning;
+      while(innings.length < evInn) innings.push({us:0,them:0});
+      innings[evInn-1].them = ev.themRuns || 0;
+      // Advance inning if we haven't already via outs
+      if(inning <= evInn){
+        inning = evInn + 1;
+        outs = 0;
+        bases = {first:null, second:null, third:null};
+        while(innings.length < inning) innings.push({us:0,them:0});
+      }
+    }
+  }
+
+  // Ensure current inning row exists
+  while(innings.length < inning) innings.push({us:0,them:0});
+
+  const score = {
+    us: innings.reduce((s,i)=>s+(i.us||0),0),
+    them: innings.reduce((s,i)=>s+(i.them||0),0)
+  };
+
+  return {inning, outs, bases, innings, score, hrCount, nextBatterIdx, atBatCount};
+}
+
+// ─── ENGINE: DEFAULT RUNNERS ─────────────────────────────────────────────────
+
+function gmDefaultRunners(state, result, batterId){
+  const b = state.bases;
+  const runners = {};
+
+  if(['K','GO','FO','LO'].includes(result)){
+    runners[batterId] = 'out';
+
+  } else if(result === 'SF'){
+    runners[batterId] = 'out';
+    if(b.third) runners[b.third] = 'scored';
+
+  } else if(result === 'HR'){
+    // All bases + batter score
+    runners[batterId] = 'scored';
+    if(b.first)  runners[b.first]  = 'scored';
+    if(b.second) runners[b.second] = 'scored';
+    if(b.third)  runners[b.third]  = 'scored';
+
+  } else if(result === '3B'){
+    runners[batterId] = '3B';
+    if(b.first)  runners[b.first]  = 'scored';
+    if(b.second) runners[b.second] = 'scored';
+    if(b.third)  runners[b.third]  = 'scored';
+
+  } else if(result === '2B'){
+    runners[batterId] = '2B';
+    if(b.third)  runners[b.third]  = 'scored';
+    if(b.second) runners[b.second] = 'scored';
+    if(b.first)  runners[b.first]  = '3B';
+
+  } else if(result === '1B'){
+    runners[batterId] = '1B';
+    if(b.third)  runners[b.third]  = 'scored';
+    if(b.second) runners[b.second] = '3B';
+    if(b.first)  runners[b.first]  = '2B';
+
+  } else if(result === 'BB'){
+    // Force advance
+    runners[batterId] = '1B';
+    if(b.first && b.second && b.third){
+      runners[b.third] = 'scored';
+      runners[b.second] = '3B';
+      runners[b.first]  = '2B';
+    } else if(b.first && b.second){
+      runners[b.second] = '3B';
+      runners[b.first]  = '2B';
+    } else if(b.first){
+      runners[b.first]  = '2B';
+    }
+
+  } else if(result === 'FC'){
+    // Lead runner out, batter reaches first, others advance 1
+    runners[batterId] = '1B';
+    // Lead runner = one on base (choose highest base)
+    const lead = b.third || b.second || b.first;
+    if(lead) runners[lead] = 'out';
+    if(b.first && b.first !== lead)  runners[b.first]  = '2B';
+    if(b.second && b.second !== lead) runners[b.second] = '3B';
+    if(b.third && b.third !== lead)  runners[b.third]  = 'scored';
+
+  } else if(result === 'ROE' || result === 'E'){
+    // Same as 1B advancement
+    runners[batterId] = '1B';
+    if(b.third)  runners[b.third]  = 'scored';
+    if(b.second) runners[b.second] = '3B';
+    if(b.first)  runners[b.first]  = '2B';
+  }
+
+  // Filter null keys
+  Object.keys(runners).forEach(k=>{ if(!k || k==='null') delete runners[k]; });
+  return runners;
+}
+
+// ─── ENGINE: APPLY RUNNERS ───────────────────────────────────────────────────
+
+function gmApplyRunners(currentBases, runners, batterId, result, isHROut){
+  const b = {...currentBases};
+  if(!runners || !Object.keys(runners).length) return b;
+
+  // Remove all mentioned runners from their current bases
+  Object.keys(runners).forEach(pid=>{
+    if(b.first === pid)  b.first  = null;
+    if(b.second === pid) b.second = null;
+    if(b.third === pid)  b.third  = null;
+  });
+
+  if(isHROut){
+    // Batter is out, everyone else stays
+    return b;
+  }
+
+  // Place runners at new positions
+  Object.entries(runners).forEach(([pid, dest])=>{
+    if(dest === '1B') b.first  = pid;
+    if(dest === '2B') b.second = pid;
+    if(dest === '3B') b.third  = pid;
+    // 'scored' and 'out' → not on base
+  });
+
+  return b;
+}
+
+// ─── ENGINE: COUNT RUNS AND OUTS ────────────────────────────────────────────
+
+function gmCountRunsAndOuts(runners){
+  let runs = 0, outs = 0;
+  Object.values(runners||{}).forEach(dest=>{
+    if(dest === 'scored') runs++;
+    if(dest === 'out') outs++;
+  });
+  return {runs, outs};
+}
+
+// ─── ENGINE: PLAYER STATS ────────────────────────────────────────────────────
+
+function gmGetPlayerAtBats(playerId, games){
+  let pa=0,ab=0,h=0,d=0,t=0,hr=0,bb=0,k=0,go=0,fo=0,lo=0,sf=0,rbi=0,r=0;
+  (games||gmDb.games).forEach(g=>{
+    (g.events||[]).filter(ev=>ev.type==='pa'&&ev.playerId===playerId).forEach(ev=>{
+      const res = ev.result;
+      pa++;
+      if(!['BB','SF'].includes(res)) ab++;
+      if(['1B','2B','3B','HR'].includes(res)) h++;
+      if(res==='2B') d++;
+      if(res==='3B') t++;
+      if(res==='HR') hr++;
+      if(res==='BB') bb++;
+      if(res==='K') k++;
+      if(res==='GO') go++;
+      if(res==='FO') fo++;
+      if(res==='LO') lo++;
+      if(res==='SF') sf++;
+      // RBI: count 'scored' in runners map if not pure out
+      const runners = ev.runners||{};
+      if(!['K','GO','FO','LO'].includes(res)){
+        rbi += Object.values(runners).filter(d=>d==='scored').length;
+      }
+      // Runs: batter scored
+      if(runners[playerId]==='scored') r++;
+    });
+  });
+  const s = {pa,ab,h,d,t,hr,bb,k,go,fo,lo,sf,rbi,r,hbp:0,g:0};
+  return {
+    ...s,
+    avg: avgFmt(h,ab),
+    obp: obpFmt({...s,hbp:0}),
+    slg: slgFmt(s),
+    ops: opsFmt({...s,hbp:0})
+  };
+}
+
+function gmPlayerSeasonStats(playerId){ return gmGetPlayerAtBats(playerId, gmDb.games); }
+
+function gmGameStats(game){
+  let h=0,ab=0,rbi=0,r=0,bb=0,k=0,hr=0;
+  (game.events||[]).filter(ev=>ev.type==='pa').forEach(ev=>{
+    const res=ev.result;
+    if(!['BB','SF'].includes(res)) ab++;
+    if(['1B','2B','3B','HR'].includes(res)) h++;
+    if(res==='HR') hr++;
+    if(res==='BB') bb++;
+    if(res==='K') k++;
+    const ro = ev.runners||{};
+    if(!['K','GO','FO','LO'].includes(res)){
+      rbi += Object.values(ro).filter(d=>d==='scored').length;
+    }
+    if(ro[ev.playerId]==='scored') r++;
+  });
+  return {h,ab,rbi,r,bb,k,hr};
+}
+
+function gmTeamStats(games){
+  let h=0,ab=0,rbi=0,r=0,bb=0,hr=0;
+  (games||[]).forEach(g=>{
+    const gs=gmGameStats(g);
+    h+=gs.h; ab+=gs.ab; rbi+=gs.rbi; r+=gs.r; bb+=gs.bb; hr+=gs.hr;
+  });
+  return {avg:avgFmt(h,ab), r, rbi, hr, h, ab, bb};
+}
+
+function gmScoreTotals(game){
+  const st = gmDeriveState(game);
+  return {
+    us:  st.innings.reduce((s,i)=>s+(i.us||0),0),
+    them: st.innings.reduce((s,i)=>s+(i.them||0),0)
+  };
+}
 
 function gmTab(tab){
   gmCurrentTab = tab;
@@ -2338,13 +2669,24 @@ function renderGM(tab){
   if(tab==='stats')  renderGMStats(el);
 }
 
+// ── GM Result Label ───────────────────────────────────────────────────────────
+function gmResultLabel(r){
+  return {
+    '1B':'Single','2B':'Double','3B':'Triple','HR':'Home Run','HR_OUT':'HR (Over Limit — Out)',
+    'BB':'Walk','K':'Strikeout','GO':'Ground Out',
+    'FO':'Fly Out','LO':'Line Out','SF':'Sac Fly','FC':"Fielder's Choice",
+    'ROE':'Reached on Error','CS':'Caught Stealing'
+  }[r]||r;
+}
+
 // ── GM Home ──────────────────────────────────────────────────────────────────
 function renderGMHome(el){
   const ag = gmDb.activeGameId ? gmDb.games.find(g=>g.id===gmDb.activeGameId) : null;
   let html = '';
 
   if(ag){
-    const totals = gmScoreTotals(ag);
+    const st = gmDeriveState(ag);
+    const totals = {us:st.innings.reduce((s,i)=>s+(i.us||0),0),them:st.innings.reduce((s,i)=>s+(i.them||0),0)};
     const usLead = totals.us >= totals.them;
     html += `
       <div class="gm-scoreline">
@@ -2353,16 +2695,20 @@ function renderGMHome(el){
           <div class="gm-score-num${usLead?' lead':''}">${totals.us}</div>
         </div>
         <div class="gm-score-mid">
-          <div class="gm-inn-lbl">INN ${ag.currentInning}</div>
+          <div class="gm-inn-lbl">INN ${st.inning}</div>
           <div style="font-size:18px;font-weight:900;color:rgba(255,255,255,.2)">–</div>
-          <div style="margin-top:4px">${[0,1,2].map(i=>`<span class="gout${i<ag.outs?' on':''}"></span>`).join('')}</div>
+          <div style="margin-top:4px">${[0,1,2].map(i=>`<span class="gout${i<st.outs?' on':''}"></span>`).join('')}</div>
         </div>
         <div class="gm-score-side">
           <div class="gm-score-name">${ag.opponent||'Opponent'}</div>
           <div class="gm-score-num${totals.them>totals.us?' lead':''}">${totals.them}</div>
         </div>
       </div>
-      <button class="btn btn-g btn-full btn-lg" style="margin-bottom:12px" onclick="gmTab('book')">Open Scorebook →</button>`;
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="btn btn-g" style="flex:1" onclick="gmTab('book')">Open Scorebook →</button>
+        <button class="btn btn-ghost btn-sm" onclick="openGMEditGame('${ag.id}')" title="Edit Game">✏️</button>
+        <button class="btn btn-ghost btn-sm" onclick="gmResetGame('${ag.id}')" title="Reset">↺</button>
+      </div>`;
   } else {
     html += `
       <div class="gbanner" style="text-align:center;padding:24px 16px;margin-bottom:12px">
@@ -2380,7 +2726,7 @@ function renderGMHome(el){
     const t = gmScoreTotals(g);
     if(t.us > t.them) wins++; else losses++;
   });
-  const teamSt = gmTeamStats(gmDb.games.filter(g=>g.status==='final'));
+  const teamSt = gmTeamStats(finished);
 
   html += `
     <div class="card">
@@ -2394,7 +2740,7 @@ function renderGMHome(el){
     </div>`;
 
   // Recent games
-  const recent = [...gmDb.games].sort((a,b)=>b.date-a.date).slice(0,6);
+  const recent = [...gmDb.games].sort((a,b)=>b.date-a.date).slice(0,8);
   if(recent.length){
     html += `<div class="card"><div class="card-title">Games</div>`;
     recent.forEach(g=>{
@@ -2408,7 +2754,7 @@ function renderGMHome(el){
         const won = t.us > t.them;
         html += `<div class="hitem" onclick="openGMGameDetail('${g.id}')">
           <div class="dot" style="background:${won?'rgba(74,222,128,.2)':'rgba(248,113,113,.15)'};color:${won?'var(--g)':'var(--red)'};font-size:13px;font-weight:800">${won?'W':'L'}</div>
-          <div class="hinfo"><div class="htitle">vs. ${g.opponent||'Opponent'}</div><div class="hsub">${formatDate(g.date)}</div></div>
+          <div class="hinfo"><div class="htitle">vs. ${g.opponent||'Opponent'}</div><div class="hsub">${formatDate(g.date)}${g.location?' · '+g.location:''}</div></div>
           <div class="hline"><div class="hline-stat">${t.us}–${t.them}</div></div>
         </div>`;
       }
@@ -2433,10 +2779,26 @@ function renderGMBook(el){
     return;
   }
 
-  const totals = gmScoreTotals(ag);
+  const st = gmDeriveState(ag);
+  const totals = {us:st.innings.reduce((s,i)=>s+(i.us||0),0), them:st.innings.reduce((s,i)=>s+(i.them||0),0)};
   const usLead = totals.us >= totals.them;
-  const batter = gmCurrentBatter(ag);
-  const gs = gmGameStats(ag);
+
+  // Current batter
+  let batter = null;
+  if(ag.lineup && ag.lineup.length){
+    const idx = st.nextBatterIdx % ag.lineup.length;
+    const pid = ag.lineup[idx];
+    batter = gmDb.roster.find(p=>p.id===pid)||null;
+  }
+
+  // Diamond: show last names on bases
+  const baseName = (pid)=>{
+    if(!pid) return '';
+    const p = gmDb.roster.find(r=>r.id===pid);
+    if(!p) return '?';
+    const parts = p.name.split(' ');
+    return parts[parts.length-1].slice(0,5);
+  };
 
   let html = `
     <div class="gm-scoreline">
@@ -2445,9 +2807,9 @@ function renderGMBook(el){
         <div class="gm-score-num${usLead?' lead':''}">${totals.us}</div>
       </div>
       <div class="gm-score-mid">
-        <div class="gm-inn-lbl">INN ${ag.currentInning}</div>
+        <div class="gm-inn-lbl">INN ${st.inning}</div>
         <div style="font-size:18px;font-weight:900;color:rgba(255,255,255,.2)">–</div>
-        <div style="margin-top:4px">${[0,1,2].map(i=>`<span class="gout${i<ag.outs?' on':''}"></span>`).join('')}</div>
+        <div style="margin-top:4px">${[0,1,2].map(i=>`<span class="gout${i<st.outs?' on':''}"></span>`).join('')}</div>
       </div>
       <div class="gm-score-side">
         <div class="gm-score-name">${ag.opponent||'Opponent'}</div>
@@ -2457,25 +2819,25 @@ function renderGMBook(el){
 
     <div class="diamond-wrap">
       <div class="diamond">
-        <div class="dbase d-2b${ag.bases.second?' on':''}"><span class="dbase-lbl">2B</span></div>
-        <div class="dbase d-3b${ag.bases.third?' on':''}"><span class="dbase-lbl">3B</span></div>
-        <div class="dbase d-1b${ag.bases.first?' on':''}"><span class="dbase-lbl">1B</span></div>
+        <div class="dbase d-2b${st.bases.second?' on':''}"><span class="dbase-lbl">${st.bases.second?baseName(st.bases.second):'2B'}</span></div>
+        <div class="dbase d-3b${st.bases.third?' on':''}"><span class="dbase-lbl">${st.bases.third?baseName(st.bases.third):'3B'}</span></div>
+        <div class="dbase d-1b${st.bases.first?' on':''}"><span class="dbase-lbl">${st.bases.first?baseName(st.bases.first):'1B'}</span></div>
         <div class="dbase d-home" style="opacity:.3"><span class="dbase-lbl">H</span></div>
       </div>
     </div>`;
 
-  // Current batter
+  // Current batter card
   if(batter){
     const bStats = gmPlayerSeasonStats(batter.id);
-    const gameABs = ag.atBats.filter(ab=>ab.playerId===batter.id);
-    const gameH = gameABs.filter(ab=>['1B','2B','3B','HR'].includes(ab.result)).length;
-    const gameAB = gameABs.filter(ab=>!['BB','HBP','SF'].includes(ab.result)).length;
+    const gameEvs = (ag.events||[]).filter(ev=>ev.type==='pa'&&ev.playerId===batter.id);
+    const gameH = gameEvs.filter(ev=>['1B','2B','3B','HR'].includes(ev.result)).length;
+    const gameAB = gameEvs.filter(ev=>!['BB','SF'].includes(ev.result)).length;
     html += `
       <div class="batter-card">
         <div class="batter-num">${batter.number||'—'}</div>
         <div class="batter-info">
           <div class="batter-name">${batter.name}</div>
-          <div class="batter-pos">${batter.position||''} · ${bStats.avg} AVG</div>
+          <div class="batter-pos">${batter.position||''} · ${bStats.avg} career AVG</div>
         </div>
         <div class="batter-game-stat">${gameH}-${gameAB} today</div>
       </div>`;
@@ -2483,88 +2845,56 @@ function renderGMBook(el){
     html += `<div class="batter-card"><div class="batter-info"><div class="batter-name" style="color:var(--text2)">No lineup set</div></div></div>`;
   }
 
-  // PA modifier (inline — shown after tapping a result)
-  if(gmPendingResult !== null){
-    const isOut = ['K','GO','FO','LO'].includes(gmPendingResult);
-    const isSF  = gmPendingResult === 'SF';
-    if(isOut && !isSF){
-      // Confirm area for outs
-      html += `
-        <div class="pa-mod">
-          <div class="pa-mod-title">Confirm Out — ${gmResultLabel(gmPendingResult)}</div>
-          <div style="display:flex;gap:8px">
-            <button class="btn btn-red btn-full" onclick="gmConfirmPA()">✓ Log Out</button>
-            <button class="btn btn-ghost" onclick="gmCancelResult()">Cancel</button>
-          </div>
-        </div>`;
-    } else {
-      // Hits/BB/HBP/reach/SF: show RBI + scored pickers
-      const maxRBI = 4;
-      let rbiHtml = '';
-      for(let i=0;i<=maxRBI;i++){
-        rbiHtml += `<button class="rbib${i===gmPendingRBIs?' sel':''}" onclick="gmSelectRBI(${i})">${i}</button>`;
-      }
-      html += `
-        <div class="pa-mod">
-          <div class="pa-mod-title">${gmResultLabel(gmPendingResult)}</div>
-          <div class="rbi-title">RBIs Scored</div>
-          <div class="rbipick" style="margin-bottom:12px">${rbiHtml}</div>
-          <div class="drow-lbl" style="margin-bottom:6px">Batter Scored?</div>
-          <div style="display:flex;gap:8px;margin-bottom:12px">
-            <button class="dpill${gmPendingScored?' ':'  sel-scored-no '}" onclick="gmSelScored(false,this)"><span class="dico">✗</span>No</button>
-            <button class="dpill${gmPendingScored?' sel-scored-yes':''}" onclick="gmSelScored(true,this)"><span class="dico">✓</span>Scored</button>
-          </div>
-          <div style="display:flex;gap:8px">
-            <button class="btn btn-g btn-full" onclick="gmConfirmPA()">Log It</button>
-            <button class="btn btn-ghost" onclick="gmCancelResult()">Cancel</button>
-          </div>
-        </div>`;
-    }
+  // HR limit badge
+  if(st.hrCount >= 1){
+    html += `<div style="text-align:center;margin-bottom:8px;padding:6px;background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.25);border-radius:10px;font-size:12px;font-weight:700;color:var(--red)">⚠️ HR Limit Reached — Next HR = Out</div>`;
   }
 
-  // Result buttons (only shown when not in pending state)
-  if(gmPendingResult === null){
-    html += `
-      <div class="rb-grid">
-        <button class="rb hit" onclick="gmLogResult('1B')">1B<span class="rb-sub">Single</span></button>
-        <button class="rb xbh" onclick="gmLogResult('2B')">2B<span class="rb-sub">Double</span></button>
-        <button class="rb xbh" onclick="gmLogResult('3B')">3B<span class="rb-sub">Triple</span></button>
-        <button class="rb homer" onclick="gmLogResult('HR')">HR<span class="rb-sub">Homer</span></button>
-        <button class="rb walk" onclick="gmLogResult('BB')">BB<span class="rb-sub">Walk</span></button>
-        <button class="rb walk" onclick="gmLogResult('HBP')">HBP<span class="rb-sub">Hit by P</span></button>
-        <button class="rb out" onclick="gmLogResult('K')">K<span class="rb-sub">Strikeout</span></button>
-        <button class="rb out" onclick="gmLogResult('GO')">GO<span class="rb-sub">Ground Out</span></button>
-        <button class="rb out" onclick="gmLogResult('FO')">FO<span class="rb-sub">Fly Out</span></button>
-        <button class="rb out" onclick="gmLogResult('LO')">LO<span class="rb-sub">Line Out</span></button>
-        <button class="rb out" onclick="gmLogResult('SF')">SF<span class="rb-sub">Sac Fly</span></button>
-        <button class="rb reach" onclick="gmLogResult('FC')">FC<span class="rb-sub">FC</span></button>
-        <button class="rb reach wide" onclick="gmLogResult('ROE')">ROE<span class="rb-sub">Reached/Error</span></button>
-        <button class="rb reach wide" onclick="gmLogResult('CS')">CS<span class="rb-sub">Caught Stealing</span></button>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:6px">
-        <button class="btn btn-ghost" style="flex:1" onclick="gmNextBatter()">Skip ▶</button>
-        ${ag.atBats.length ? `<button class="btn btn-ghost" style="flex:1" onclick="gmUndoAB(${ag.atBats.length-1})">↩ Undo</button>` : ''}
-      </div>`;
-  }
+  // Result buttons
+  html += `
+    <div class="rb-grid">
+      <button class="rb hit" onclick="gmOpenPA('1B')">1B<span class="rb-sub">Single</span></button>
+      <button class="rb xbh" onclick="gmOpenPA('2B')">2B<span class="rb-sub">Double</span></button>
+      <button class="rb xbh" onclick="gmOpenPA('3B')">3B<span class="rb-sub">Triple</span></button>
+      <button class="rb homer${st.hrCount>=1?' out':''}" onclick="gmOpenPA('HR')">HR<span class="rb-sub">${st.hrCount>=1?'→ Out':'Homer'}</span></button>
+      <button class="rb walk" onclick="gmOpenPA('BB')">BB<span class="rb-sub">Walk</span></button>
+      <button class="rb out" onclick="gmOpenPA('K')">K<span class="rb-sub">Strikeout</span></button>
+      <button class="rb out" onclick="gmOpenPA('GO')">GO<span class="rb-sub">Ground Out</span></button>
+      <button class="rb out" onclick="gmOpenPA('FO')">FO<span class="rb-sub">Fly Out</span></button>
+      <button class="rb out" onclick="gmOpenPA('LO')">LO<span class="rb-sub">Line Out</span></button>
+      <button class="rb out" onclick="gmOpenPA('SF')">SF<span class="rb-sub">Sac Fly</span></button>
+      <button class="rb reach" onclick="gmOpenPA('FC')">FC<span class="rb-sub">FC</span></button>
+      <button class="rb reach wide" onclick="gmOpenPA('ROE')">ROE<span class="rb-sub">Reached/E</span></button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:6px;margin-bottom:6px">
+      <button class="btn btn-ghost" style="flex:1" onclick="openGMInningEnd()">End Inning →</button>
+    </div>`;
 
   // Recent plays this game
-  if(ag.atBats.length){
-    const recent = [...ag.atBats].reverse().slice(0,8);
-    html += `<div class="card" style="margin-top:12px"><div class="card-title">This Game</div><div class="plog">`;
-    recent.forEach(ab=>{
-      const p = gmDb.roster.find(p=>p.id===ab.playerId);
-      const isHit = ['1B','2B','3B','HR'].includes(ab.result);
-      const isWalk = ['BB','HBP'].includes(ab.result);
-      const cls = isHit?'bh':isWalk?'bw':'bo';
+  const paEvents = (ag.events||[]).filter(ev=>ev.type==='pa');
+  if(paEvents.length){
+    const recent = [...ag.events].reverse().filter(ev=>ev.type==='pa').slice(0,10);
+    html += `<div class="card" style="margin-top:4px"><div class="card-title">This Game</div><div class="plog">`;
+    recent.forEach(ev=>{
+      const p = gmDb.roster.find(r=>r.id===ev.playerId);
+      const isHit = ['1B','2B','3B','HR'].includes(ev.result);
+      const isWalk = ev.result === 'BB';
+      const isOut = ['K','GO','FO','LO','SF','FC','ROE','CS','HR_OUT'].includes(ev.result);
+      const cls = isHit?'bh':isWalk?'bw':isOut?'bo':'be';
+      const ro = ev.runners||{};
+      const runs = Object.values(ro).filter(d=>d==='scored').length;
       const extras = [];
-      if(ab.rbis>0) extras.push(ab.rbis+' RBI');
-      if(ab.scored) extras.push('Scored');
+      if(runs>0) extras.push(runs+' RBI');
+      if(ro[ev.playerId]==='scored') extras.push('Scored');
+      const origIdx = ag.events.indexOf(ev);
       html += `<div class="pentry">
-        <div class="pbadge ${cls}">${ab.result}</div>
+        <div class="pbadge ${cls}">${ev.result}</div>
         <div class="flex1">
           <div class="pmain">${p?p.name:'?'}${extras.length?' · <span class="psub-inline">'+extras.join(' · ')+'</span>':''}</div>
-          <div class="psub">Inn ${ab.inning}</div>
+          <div class="psub">Inn ${ev.inning||'?'}</div>
         </div>
+        <button class="pundo" onclick="gmEditEvent(${origIdx})" title="Edit">✏</button>
+        <button class="pundo" onclick="gmDeleteEvent(${origIdx})" title="Delete">×</button>
       </div>`;
     });
     html += `</div></div>`;
@@ -2573,145 +2903,211 @@ function renderGMBook(el){
   el.innerHTML = html;
 }
 
-function gmLogResult(result){
-  if(!gmDb.activeGameId) return;
+// ── PA Modal Logic ────────────────────────────────────────────────────────────
+
+function gmOpenPA(result, editIdx){
+  const ag = gmDb.activeGameId ? gmDb.games.find(g=>g.id===gmDb.activeGameId) : null;
+  if(!ag) return;
+  const st = gmDeriveState(ag);
+
+  let batterId = null;
+  if(ag.lineup && ag.lineup.length){
+    batterId = ag.lineup[st.nextBatterIdx % ag.lineup.length];
+  }
+
   gmPendingResult = result;
-  gmPendingRBIs = 0;
-  gmPendingScored = false;
-  renderGMBook(document.getElementById('gmContent'));
+  gmEditingEventIdx = (editIdx !== undefined) ? editIdx : null;
+
+  // If editing, restore batter and runners from existing event
+  if(gmEditingEventIdx !== null){
+    const editEv = ag.events[gmEditingEventIdx];
+    batterId = editEv.playerId;
+    // Derive state BEFORE this event to get correct pre-play bases
+    const preSt = gmDeriveState({...ag, events: ag.events.slice(0, gmEditingEventIdx)});
+    // Start from defaults then overlay saved runners
+    gmPendingRunners = Object.assign({}, gmDefaultRunners(preSt, editEv.result, batterId), editEv.runners||{});
+    gmPendingCount = editEv.count||'';
+    gmPendingDetails = {...(editEv.details||{})};
+  } else {
+    gmPendingRunners = gmDefaultRunners(st, result, batterId);
+    gmPendingCount = '';
+    gmPendingDetails = {};
+  }
+
+  gmRenderPAModal(ag);
+  openModal('modal-gm-pa');
 }
 
-function gmSelectRBI(n){
-  gmPendingRBIs = n;
-  // Re-render to update button state
-  document.querySelectorAll('#gmContent .rbib').forEach((b,i)=>{
-    b.classList.toggle('sel', i===n);
-  });
+function gmRenderPAModal(ag){
+  if(!ag || !gmPendingResult) return;
+  const st = gmDeriveState(ag);
+
+  // Determine batterId
+  let batterId = null;
+  if(gmEditingEventIdx !== null){
+    const editEv = ag.events[gmEditingEventIdx];
+    if(editEv) batterId = editEv.playerId;
+  }
+  if(!batterId && ag.lineup && ag.lineup.length){
+    batterId = ag.lineup[st.nextBatterIdx % ag.lineup.length];
+  }
+
+  const batter = gmDb.roster.find(p=>p.id===batterId);
+  const batterName = batter ? batter.name : (batterId||'Batter');
+  const result = gmPendingResult;
+
+  // Pre-play state for runners display
+  const preSt = gmEditingEventIdx !== null
+    ? gmDeriveState({...ag, events: ag.events.slice(0, gmEditingEventIdx)})
+    : st;
+
+  const isSimpleOut = ['K','GO','FO','LO'].includes(result)
+    && !preSt.bases.first && !preSt.bases.second && !preSt.bases.third
+    && gmEditingEventIdx === null;
+
+  let html = `<h2>${gmResultLabel(result)}</h2>`;
+  if(isSimpleOut){
+    html += `<p style="color:var(--text2);font-size:14px;margin-bottom:16px">Batter: ${batterName}</p>
+      <button class="btn btn-red btn-full btn-lg" onclick="gmConfirmPA()">&#10003; Log Out</button>
+      <button class="btn btn-ghost btn-full" onclick="closeModal('modal-gm-pa')" style="margin-top:8px">Cancel</button>`;
+  } else {
+    html += `<p style="color:var(--text2);font-size:13px;margin-bottom:14px">Batter: <strong>${batterName}</strong></p>`;
+
+    // Build ordered runner list: 3B → 2B → 1B → Batter
+    const runnerList = [];
+    if(preSt.bases.third)  runnerList.push({pid:preSt.bases.third,  base:'3B'});
+    if(preSt.bases.second) runnerList.push({pid:preSt.bases.second, base:'2B'});
+    if(preSt.bases.first)  runnerList.push({pid:preSt.bases.first,  base:'1B'});
+    runnerList.push({pid: batterId||'_batter', base:'Batter'});
+
+    const destLabel = {scored:'SCORES','3B':'3rd Base','2B':'2nd Base','1B':'1st Base','out':'OUT'};
+    const destColor = {scored:'var(--g)','3B':'var(--am)','2B':'var(--am)','1B':'var(--am)',out:'var(--red)'};
+
+    html += `<div style="margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Runner Movement</div>`;
+
+    runnerList.forEach(({pid, base})=>{
+      const rp = gmDb.roster.find(r=>r.id===pid);
+      const rname = (pid===batterId||pid==='_batter') ? 'Batter' : (rp ? rp.name : '?');
+      const curDest = gmPendingRunners[pid] || 'out';
+      const color = destColor[curDest]||'var(--text2)';
+      const safePid = pid.replace(/'/g,"\\'");
+      html += `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div style="flex:1;font-size:13px;font-weight:700;color:var(--text)">${rname}<span style="color:var(--text2);font-weight:500;font-size:12px"> (${base})</span></div>
+        <div style="font-size:13px;font-weight:800;color:${color};min-width:80px;text-align:right">${destLabel[curDest]||curDest}</div>
+        <button onclick="gmCycleRunnerDest('${safePid}')" style="background:rgba(255,255,255,.08);border:1px solid var(--border2);color:var(--text2);padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap">Change</button>
+      </div>`;
+    });
+
+    html += `</div>
+      <div class="fgrp">
+        <label class="flbl">Count (optional, e.g. 2-2)</label>
+        <input class="finput" id="gm-pa-count" value="${gmPendingCount||''}" placeholder="1-1" maxlength="6" oninput="gmPendingCount=this.value">
+      </div>
+      <button class="btn btn-g btn-full btn-lg" onclick="gmConfirmPA()">Log It</button>
+      <button class="btn btn-ghost btn-full" onclick="closeModal('modal-gm-pa')" style="margin-top:8px">Cancel</button>`;
+  }
+
+  document.getElementById('gm-pa-content').innerHTML = html;
 }
 
-function gmSelScored(val, btn){
-  gmPendingScored = val;
-  btn.closest('div').querySelectorAll('.dpill').forEach(b=>b.className='dpill');
-  btn.classList.add(val ? 'sel-scored-yes' : 'sel-scored-no');
-}
-
-function gmCancelResult(){
-  gmPendingResult = null;
-  gmPendingRBIs = 0;
-  gmPendingScored = false;
-  renderGMBook(document.getElementById('gmContent'));
+function gmCycleRunnerDest(pid){
+  const destOrder = ['scored','3B','2B','1B','out'];
+  const cur = gmPendingRunners[pid] || 'out';
+  const nextIdx = (destOrder.indexOf(cur)+1) % destOrder.length;
+  gmPendingRunners[pid] = destOrder[nextIdx];
+  // Re-render modal content only — runners already stored in gmPendingRunners
+  const ag = gmDb.activeGameId ? gmDb.games.find(g=>g.id===gmDb.activeGameId) : null;
+  if(ag) gmRenderPAModal(ag);
 }
 
 function gmConfirmPA(){
   const ag = gmDb.activeGameId ? gmDb.games.find(g=>g.id===gmDb.activeGameId) : null;
-  if(!ag || gmPendingResult===null) return;
-  const batter = gmCurrentBatter(ag);
-  const batterId = batter ? batter.id : null;
-  const isOut = ['K','GO','FO','LO','SF','CS'].includes(gmPendingResult);
+  if(!ag || !gmPendingResult) return;
+  const st = gmDeriveState(ag);
 
-  // Build AB record
-  const ab = {
-    id: uid(),
-    playerId: batterId,
-    inning: ag.currentInning,
-    result: gmPendingResult,
-    rbis: gmPendingRBIs,
-    scored: gmPendingScored,
-    sb: false
-  };
-  ag.atBats.push(ab);
-
-  // Update bases
-  updateBases(ag, batterId, gmPendingResult);
-
-  // Handle outs
-  if(isOut && gmPendingResult !== 'FC' && gmPendingResult !== 'ROE'){
-    ag.outs++;
-    if(ag.outs >= 3){
-      gmPendingResult = null;
-      gmPendingRBIs = 0;
-      gmPendingScored = false;
-      saveGM();
-      openGMInningEnd();
-      return;
-    }
+  let batterId = null;
+  if(gmEditingEventIdx !== null){
+    batterId = ag.events[gmEditingEventIdx].playerId;
+  } else if(ag.lineup && ag.lineup.length){
+    batterId = ag.lineup[st.nextBatterIdx % ag.lineup.length];
   }
 
-  // Advance batter
-  gmNextBatter(ag);
+  const countEl = document.getElementById('gm-pa-count');
+  const count = countEl ? countEl.value.trim() : '';
+
+  // Clean up runners map: rename _batter key to actual batterId if needed
+  const cleanRunners = {};
+  Object.entries(gmPendingRunners).forEach(([k,v])=>{
+    const realKey = (k==='_batter' && batterId) ? batterId : k;
+    if(realKey && realKey!=='null') cleanRunners[realKey] = v;
+  });
+
+  const ev = {
+    id: uid(),
+    type: 'pa',
+    playerId: batterId,
+    result: gmPendingResult,
+    runners: cleanRunners,
+    count: count||null,
+    details: {...gmPendingDetails},
+    inning: st.inning
+  };
+
+  if(gmEditingEventIdx !== null){
+    ag.events.splice(gmEditingEventIdx, 1, ev);
+    toast('Play updated!');
+  } else {
+    ag.events.push(ev);
+    toast(gmResultLabel(gmPendingResult));
+  }
 
   gmPendingResult = null;
-  gmPendingRBIs = 0;
-  gmPendingScored = false;
+  gmPendingRunners = {};
+  gmPendingCount = '';
+  gmEditingEventIdx = null;
   saveGM();
-  renderGMBook(document.getElementById('gmContent'));
-  toast(gmResultLabel(ab.result)+(ab.rbis>0?' · '+ab.rbis+' RBI':''));
-}
+  closeModal('modal-gm-pa');
 
-function gmNextBatter(ag){
-  const game = ag || (gmDb.activeGameId ? gmDb.games.find(g=>g.id===gmDb.activeGameId) : null);
-  if(!game || !game.lineup.length) return;
-  game.nextBatterIdx = (game.nextBatterIdx + 1) % game.lineup.length;
-  if(!ag){
-    saveGM();
+  // Check if 3 outs now → prompt inning end
+  const newSt = gmDeriveState(ag);
+  if(newSt.inning > st.inning){
+    // Auto-advanced due to 3 outs — ask for opponent runs
+    openGMInningEnd(st.inning);
+  } else {
     renderGMBook(document.getElementById('gmContent'));
   }
 }
 
-function gmUndoAB(idx){
+function gmEditEvent(idx){
   const ag = gmDb.activeGameId ? gmDb.games.find(g=>g.id===gmDb.activeGameId) : null;
-  if(!ag || idx < 0 || idx >= ag.atBats.length) return;
-  const ab = ag.atBats[idx];
-  ag.atBats.splice(idx,1);
-  // Rewind batter index
-  if(ag.lineup.length){
-    ag.nextBatterIdx = (ag.nextBatterIdx - 1 + ag.lineup.length) % ag.lineup.length;
-  }
-  // Rewind outs if it was an out
-  if(['K','GO','FO','LO','SF','CS'].includes(ab.result)){
-    ag.outs = Math.max(0, ag.outs - 1);
-  }
+  if(!ag) return;
+  const ev = ag.events[idx];
+  if(!ev || ev.type !== 'pa') return;
+  gmOpenPA(ev.result, idx);
+}
+
+function gmDeleteEvent(idx){
+  const ag = gmDb.activeGameId ? gmDb.games.find(g=>g.id===gmDb.activeGameId) : null;
+  if(!ag) return;
+  const ev = ag.events[idx];
+  if(!ev) return;
+  ag.events.splice(idx, 1);
   saveGM();
-  toast('Undone: '+gmResultLabel(ab.result));
+  toast('Play deleted');
   renderGMBook(document.getElementById('gmContent'));
 }
 
-function updateBases(game, batterId, result){
-  const b = game.bases;
-  if(result==='1B'){
-    // third→score, second→third, first→second, batter→first
-    if(b.third){ game.bases.third = null; }
-    if(b.second){ game.bases.third = b.second; game.bases.second = null; }
-    if(b.first){ game.bases.second = b.first; game.bases.first = null; }
-    game.bases.first = batterId;
-  } else if(result==='2B'){
-    if(b.third){ game.bases.third = null; }
-    if(b.second){ game.bases.third = null; /* scores */ }
-    if(b.first){ game.bases.third = b.first; game.bases.first = null; }
-    game.bases.second = batterId;
-  } else if(result==='3B'){
-    game.bases = {first:null, second:null, third:batterId};
-  } else if(result==='HR'){
-    game.bases = {first:null, second:null, third:null};
-  } else if(result==='BB'||result==='HBP'||result==='FC'||result==='ROE'){
-    // Force advance: only push if first is occupied
-    if(b.first && b.second && b.third){ game.bases.third = null; }
-    if(b.first && b.second){ game.bases.third = b.second; }
-    if(b.first){ game.bases.second = b.first; }
-    game.bases.first = batterId;
-  } else if(result==='SF'){
-    // Runner on third scores, out recorded
-    game.bases.third = null;
-  }
-  // K/GO/FO/LO/CS: no base change
-}
-
-function openGMInningEnd(){
+function openGMInningEnd(forInning){
   const ag = gmDb.activeGameId ? gmDb.games.find(g=>g.id===gmDb.activeGameId) : null;
   if(!ag) return;
+  const st = gmDeriveState(ag);
+  const innNum = forInning || (st.outs >= 3 ? st.inning - 1 : st.inning);
   gmInnPendingRuns = 0;
-  document.getElementById('gm-inning-modal-title').textContent = `End of Inning ${ag.currentInning}`;
+  document.getElementById('gm-inning-modal-title').textContent = `End of Inning ${innNum}`;
   document.getElementById('gm-inn-runs').textContent = '0';
+  // Store which inning this is for
+  document.getElementById('modal-gm-inning').dataset.inning = innNum;
   openModal('modal-gm-inning');
 }
 
@@ -2723,94 +3119,69 @@ function gmInnAdj(delta){
 function gmConfirmInningEnd(){
   const ag = gmDb.activeGameId ? gmDb.games.find(g=>g.id===gmDb.activeGameId) : null;
   if(!ag) return;
-  // Record opponent runs for this inning
-  if(!ag.innings) ag.innings = [];
-  // Find or create inning record
-  while(ag.innings.length < ag.currentInning) ag.innings.push({us:0, them:0});
-  ag.innings[ag.currentInning-1].them = gmInnPendingRuns;
-  // Compute our runs from atBats this inning
-  const ourRuns = ag.atBats.filter(ab=>ab.inning===ag.currentInning&&ab.scored).length
-                + ag.atBats.filter(ab=>ab.inning===ag.currentInning&&(ab.rbis||0)>0)
-                            .reduce((s,ab)=>s+(ab.rbis||0),0);
-  // Actually track our runs via scored flags + rbis per inning
-  const innAtBats = ag.atBats.filter(ab=>ab.inning===ag.currentInning);
-  let usRuns = innAtBats.filter(ab=>ab.scored).length;
-  innAtBats.forEach(ab=>{ usRuns += (ab.rbis||0); });
-  ag.innings[ag.currentInning-1].us = usRuns;
-  // Advance inning
-  ag.currentInning++;
-  ag.outs = 0;
-  ag.bases = {first:null, second:null, third:null};
+  const innNum = parseInt(document.getElementById('modal-gm-inning').dataset.inning)||1;
+  // Push inning_end event
+  ag.events.push({
+    id: uid(),
+    type: 'inning_end',
+    inning: innNum,
+    themRuns: gmInnPendingRuns
+  });
   closeModal('modal-gm-inning');
   saveGM();
-  toast(`Inning ${ag.currentInning} — let's go!`);
+  const newSt = gmDeriveState(ag);
+  toast(`Inning ${newSt.inning} — let's go!`);
   renderGMBook(document.getElementById('gmContent'));
+}
+
+// ── GM Game Management ────────────────────────────────────────────────────────
+
+function openGMEditGame(id){
+  const g = gmDb.games.find(x=>x.id===id);
+  if(!g) return;
+  document.getElementById('gm-edit-opponent').value = g.opponent||'';
+  document.getElementById('gm-edit-location').value = g.location||'';
+  document.getElementById('gm-edit-game-id').value = g.id;
+  openModal('modal-gm-edit-game');
+}
+
+function gmSaveEditGame(){
+  const id = document.getElementById('gm-edit-game-id').value;
+  const g = gmDb.games.find(x=>x.id===id);
+  if(!g) return;
+  g.opponent = document.getElementById('gm-edit-opponent').value.trim()||g.opponent;
+  g.location = document.getElementById('gm-edit-location').value.trim();
+  saveGM();
+  closeModal('modal-gm-edit-game');
+  toast('Game updated');
+  renderGMHome(document.getElementById('gmContent'));
+}
+
+function gmResetGame(id){
+  if(!confirm('Reset all events for this game? Lineup is kept.')) return;
+  const g = gmDb.games.find(x=>x.id===id);
+  if(!g) return;
+  g.events = [];
+  saveGM();
+  toast('Game reset');
+  renderGM(gmCurrentTab);
+}
+
+function gmDeleteGame(id){
+  if(!confirm('Delete this game entirely?')) return;
+  gmDb.games = gmDb.games.filter(g=>g.id!==id);
+  if(gmDb.activeGameId===id) gmDb.activeGameId = null;
+  saveGM();
+  toast('Game deleted');
+  renderGMHome(document.getElementById('gmContent'));
 }
 
 function gmCurrentBatter(game){
   if(!game.lineup || !game.lineup.length) return null;
-  const idx = game.nextBatterIdx % game.lineup.length;
+  const st = gmDeriveState(game);
+  const idx = st.nextBatterIdx % game.lineup.length;
   const pid = game.lineup[idx];
   return gmDb.roster.find(p=>p.id===pid) || null;
-}
-
-function gmResultLabel(r){
-  return {
-    '1B':'Single','2B':'Double','3B':'Triple','HR':'Home Run',
-    'BB':'Walk','HBP':'Hit by Pitch','K':'Strikeout','GO':'Ground Out',
-    'FO':'Fly Out','LO':'Line Out','SF':'Sac Fly','FC':"Fielder's Choice",
-    'ROE':'Reached on Error','CS':'Caught Stealing'
-  }[r]||r;
-}
-
-function gmGameStats(game){
-  let h=0,ab=0,rbi=0,r=0,bb=0,k=0,hr=0;
-  (game.atBats||[]).forEach(ab_=>{
-    const res=ab_.result;
-    if(!['BB','HBP','SF'].includes(res)) ab++;
-    if(['1B','2B','3B','HR'].includes(res)) h++;
-    if(res==='HR') hr++;
-    if(res==='BB') bb++;
-    if(res==='K') k++;
-    rbi+=(ab_.rbis||0);
-    if(ab_.scored) r++;
-  });
-  return {h,ab,rbi,r,bb,k,hr};
-}
-
-function gmScoreTotals(game){
-  const innings = game.innings || [];
-  return {
-    us:   innings.reduce((s,i)=>s+(i.us||0),0),
-    them: innings.reduce((s,i)=>s+(i.them||0),0)
-  };
-}
-
-function gmTeamStats(games){
-  let h=0,ab=0,rbi=0,r=0,bb=0,hr=0;
-  games.forEach(g=>{
-    const gs=gmGameStats(g);
-    h+=gs.h; ab+=gs.ab; rbi+=gs.rbi; r+=gs.r; bb+=gs.bb; hr+=gs.hr;
-  });
-  return {avg:avgFmt(h,ab), r, rbi, hr, h, ab, bb};
-}
-
-function gmPlayerSeasonStats(playerId){
-  let h=0,ab=0,rbi=0,r=0,bb=0,hr=0,pa=0;
-  gmDb.games.forEach(g=>{
-    (g.atBats||[]).filter(ab=>ab.playerId===playerId).forEach(ab_=>{
-      const res=ab_.result;
-      pa++;
-      if(!['BB','HBP','SF'].includes(res)) ab++;
-      if(['1B','2B','3B','HR'].includes(res)) h++;
-      if(res==='HR') hr++;
-      if(res==='BB') bb++;
-      rbi+=(ab_.rbis||0);
-      if(ab_.scored) r++;
-    });
-  });
-  const obp = (ab+bb)===0?'.000':('.'+String(Math.round((h+bb)/(ab+bb)*1000)).padStart(3,'0'));
-  return {avg:avgFmt(h,ab), h, ab, rbi, r, bb, hr, pa, obp};
 }
 
 // ── GM Roster ────────────────────────────────────────────────────────────────
@@ -2901,22 +3272,30 @@ function renderGMStats(el){
     return;
   }
   const ts = gmTeamStats(games);
-  // OBP
-  const allABs = games.flatMap(g=>g.atBats||[]);
-  const tH = allABs.filter(a=>['1B','2B','3B','HR'].includes(a.result)).length;
-  const tBB = allABs.filter(a=>a.result==='BB').length;
-  const tHBP = allABs.filter(a=>a.result==='HBP').length;
-  const tSF = allABs.filter(a=>a.result==='SF').length;
-  const tAB = allABs.filter(a=>!['BB','HBP','SF'].includes(a.result)).length;
-  const tD = allABs.filter(a=>a.result==='2B').length;
-  const tT = allABs.filter(a=>a.result==='3B').length;
-  const tHR2 = allABs.filter(a=>a.result==='HR').length;
-  const obpDen = tAB+tBB+tHBP+tSF;
-  const obpVal = obpDen===0?'.000':('.'+String(Math.round((tH+tBB+tHBP)/obpDen*1000)).padStart(3,'0'));
-  const slgVal = tAB===0?'.000':('.'+String(Math.round((tH-tD-tT-tHR2+2*tD+3*tT+4*tHR2)/tAB*1000)).padStart(3,'0'));
-  const opsOBP = obpDen===0?0:(tH+tBB+tHBP)/obpDen;
-  const opsSLG = tAB===0?0:(tH-tD-tT-tHR2+2*tD+3*tT+4*tHR2)/tAB;
+
+  // Compute OBP/SLG/OPS from events
+  const allPAs = games.flatMap(g=>(g.events||[]).filter(ev=>ev.type==='pa'));
+  const tH = allPAs.filter(a=>['1B','2B','3B','HR'].includes(a.result)).length;
+  const tBB = allPAs.filter(a=>a.result==='BB').length;
+  const tSF = allPAs.filter(a=>a.result==='SF').length;
+  const tAB = allPAs.filter(a=>!['BB','SF'].includes(a.result)).length;
+  const tD  = allPAs.filter(a=>a.result==='2B').length;
+  const tT  = allPAs.filter(a=>a.result==='3B').length;
+  const tHR = allPAs.filter(a=>a.result==='HR').length;
+  const obpDen = tAB+tBB+tSF;
+  const obpVal = obpDen===0?'.000':('.'+String(Math.round((tH+tBB)/obpDen*1000)).padStart(3,'0'));
+  const slgVal = tAB===0?'.000':('.'+String(Math.round((tH-tD-tT-tHR+2*tD+3*tT+4*tHR)/tAB*1000)).padStart(3,'0'));
+  const opsOBP = obpDen===0?0:(tH+tBB)/obpDen;
+  const opsSLG = tAB===0?0:(tH-tD-tT-tHR+2*tD+3*tT+4*tHR)/tAB;
   const opsVal = '.'+String(Math.round((opsOBP+opsSLG)*1000)).padStart(3,'0');
+
+  // Win-loss record
+  const finished = games.filter(g=>g.status==='final');
+  let wins=0,losses=0;
+  finished.forEach(g=>{
+    const t=gmScoreTotals(g);
+    if(t.us>t.them) wins++; else losses++;
+  });
 
   let html = `
     <div class="card">
@@ -2929,7 +3308,7 @@ function renderGMStats(el){
       </div>
       <div class="divider"></div>
       <div class="sgrid">
-        <div class="si"><div class="sv sm">${games.length}</div><div class="sl">G</div></div>
+        <div class="si"><div class="sv sm">${wins}-${losses}</div><div class="sl">W-L</div></div>
         <div class="si"><div class="sv sm">${ts.r}</div><div class="sl">R</div></div>
         <div class="si"><div class="sv sm">${ts.h}</div><div class="sl">H</div></div>
         <div class="si"><div class="sv sm">${ts.hr}</div><div class="sl">HR</div></div>
@@ -2945,12 +3324,12 @@ function renderGMStats(el){
     html += `<div class="card"><div class="card-title">Player Stats</div>
       <div style="overflow-x:auto">
       <table class="stbl">
-        <thead><tr><th>Player</th><th>PA</th><th>AB</th><th>H</th><th>HR</th><th>RBI</th><th>R</th><th class="hi">AVG</th><th>OBP</th></tr></thead>
+        <thead><tr><th>Player</th><th>PA</th><th>AB</th><th>H</th><th>2B</th><th>3B</th><th>HR</th><th>RBI</th><th>R</th><th class="hi">AVG</th><th>OBP</th></tr></thead>
         <tbody>`;
     rosterWithStats.forEach(({p,st})=>{
       html += `<tr>
-        <td>${p.name}</td>
-        <td>${st.pa}</td><td>${st.ab}</td><td>${st.h}</td><td>${st.hr}</td>
+        <td>${p.name.split(' ')[0]}</td>
+        <td>${st.pa}</td><td>${st.ab}</td><td>${st.h}</td><td>${st.d}</td><td>${st.t}</td><td>${st.hr}</td>
         <td>${st.rbi}</td><td>${st.r}</td>
         <td class="hi">${st.avg}</td><td>${st.obp}</td>
       </tr>`;
@@ -2961,15 +3340,16 @@ function renderGMStats(el){
     const obpLeaders = [...rosterWithStats].filter(({st})=>st.ab>=5).sort((a,b)=>parseFloat(b.st.obp)-parseFloat(a.st.obp)).slice(0,5);
     const hrLeaders  = [...rosterWithStats].sort((a,b)=>b.st.hr-a.st.hr).filter(({st})=>st.hr>0).slice(0,5);
     const rbiLeaders = [...rosterWithStats].sort((a,b)=>b.st.rbi-a.st.rbi).filter(({st})=>st.rbi>0).slice(0,5);
+    const avgLeaders = [...rosterWithStats].filter(({st})=>st.ab>=5).sort((a,b)=>parseFloat(b.st.avg)-parseFloat(a.st.avg)).slice(0,5);
 
     if(obpLeaders.length){
       html += `<div class="card"><div class="card-title">OBP Leaders</div>`;
       const maxOBP = parseFloat(obpLeaders[0].st.obp)||1;
       obpLeaders.forEach(({p,st})=>{
-        const pct = maxOBP>0?Math.round(parseFloat(st.obp)/maxOBP*100):0;
+        const pctW = maxOBP>0?Math.round(parseFloat(st.obp)/maxOBP*100):0;
         html += `<div class="gm-stat-bar">
           <div class="gm-stat-bar-name">${p.name}</div>
-          <div class="prowb" style="flex:1"><div class="prowbf" style="width:${pct}%;background:var(--blue)"></div></div>
+          <div class="prowb" style="flex:1"><div class="prowbf" style="width:${pctW}%;background:var(--blue)"></div></div>
           <div class="gm-stat-bar-val">${st.obp}</div>
         </div>`;
       });
@@ -2979,10 +3359,10 @@ function renderGMStats(el){
       html += `<div class="card"><div class="card-title">HR Leaders</div>`;
       const maxHR = hrLeaders[0].st.hr||1;
       hrLeaders.forEach(({p,st})=>{
-        const pct = Math.round(st.hr/maxHR*100);
+        const pctW = Math.round(st.hr/maxHR*100);
         html += `<div class="gm-stat-bar">
           <div class="gm-stat-bar-name">${p.name}</div>
-          <div class="prowb" style="flex:1"><div class="prowbf" style="width:${pct}%;background:var(--g)"></div></div>
+          <div class="prowb" style="flex:1"><div class="prowbf" style="width:${pctW}%;background:var(--g)"></div></div>
           <div class="gm-stat-bar-val">${st.hr} HR</div>
         </div>`;
       });
@@ -2992,11 +3372,24 @@ function renderGMStats(el){
       html += `<div class="card"><div class="card-title">RBI Leaders</div>`;
       const maxRBI2 = rbiLeaders[0].st.rbi||1;
       rbiLeaders.forEach(({p,st})=>{
-        const pct = Math.round(st.rbi/maxRBI2*100);
+        const pctW = Math.round(st.rbi/maxRBI2*100);
         html += `<div class="gm-stat-bar">
           <div class="gm-stat-bar-name">${p.name}</div>
-          <div class="prowb" style="flex:1"><div class="prowbf" style="width:${pct}%;background:var(--am)"></div></div>
+          <div class="prowb" style="flex:1"><div class="prowbf" style="width:${pctW}%;background:var(--am)"></div></div>
           <div class="gm-stat-bar-val">${st.rbi} RBI</div>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+    if(avgLeaders.length){
+      html += `<div class="card"><div class="card-title">Batting Average Leaders</div>`;
+      const maxAVG = parseFloat(avgLeaders[0].st.avg)||1;
+      avgLeaders.forEach(({p,st})=>{
+        const pctW = maxAVG>0?Math.round(parseFloat(st.avg)/maxAVG*100):0;
+        html += `<div class="gm-stat-bar">
+          <div class="gm-stat-bar-name">${p.name}</div>
+          <div class="prowb" style="flex:1"><div class="prowbf" style="width:${pctW}%;background:var(--g)"></div></div>
+          <div class="gm-stat-bar-val">${st.avg}</div>
         </div>`;
       });
       html += `</div>`;
@@ -3004,45 +3397,51 @@ function renderGMStats(el){
   }
 
   // Runs by inning breakdown
-  const maxInn = Math.max(...games.map(g=>(g.innings||[]).length), 0);
-  if(maxInn > 0){
-    const innRuns = [];
-    for(let i=0;i<maxInn;i++){
-      let us=0, them=0;
-      games.forEach(g=>{
-        if(g.innings && g.innings[i]){
-          us += (g.innings[i].us||0);
-          them += (g.innings[i].them||0);
-        }
+  const finishedGames = games.filter(g=>g.status==='final');
+  if(finishedGames.length){
+    const maxInn = Math.max(...finishedGames.map(g=>{
+      const st=gmDeriveState(g);
+      return st.innings.length;
+    }), 0);
+    if(maxInn > 0){
+      const innRuns = [];
+      for(let i=0;i<maxInn;i++){
+        let us=0, them=0;
+        finishedGames.forEach(g=>{
+          const st=gmDeriveState(g);
+          if(st.innings[i]){
+            us += (st.innings[i].us||0);
+            them += (st.innings[i].them||0);
+          }
+        });
+        innRuns.push({inn:i+1, us, them});
+      }
+      const maxR = Math.max(...innRuns.flatMap(i=>[i.us,i.them]), 1);
+      html += `<div class="card"><div class="card-title">Runs by Inning</div>
+        <div style="display:flex;gap:6px;align-items:flex-end;height:80px;margin-bottom:6px">`;
+      innRuns.forEach(({us,them})=>{
+        const usPct = Math.round(us/maxR*100);
+        const themPct = Math.round(them/maxR*100);
+        html += `<div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
+          <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end">
+            <div style="background:var(--g);border-radius:3px 3px 0 0;height:${usPct}%;min-height:${us>0?'4px':'0'}"></div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end">
+            <div style="background:var(--red);border-radius:3px 3px 0 0;opacity:.6;height:${themPct}%;min-height:${them>0?'4px':'0'}"></div>
+          </div>
+        </div>`;
       });
-      innRuns.push({inn:i+1, us, them});
-    }
-    const maxR = Math.max(...innRuns.flatMap(i=>[i.us,i.them]), 1);
-    html += `<div class="card"><div class="card-title">Runs by Inning</div>
-      <div style="display:flex;gap:6px;align-items:flex-end;height:80px;margin-bottom:6px">`;
-    innRuns.forEach(({inn,us,them})=>{
-      const usPct = Math.round(us/maxR*100);
-      const themPct = Math.round(them/maxR*100);
-      html += `<div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
-        <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end">
-          <div style="background:var(--g);border-radius:3px 3px 0 0;height:${usPct}%;min-height:${us>0?'4px':'0'}"></div>
-        </div>
-        <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end">
-          <div style="background:var(--red);border-radius:3px 3px 0 0;opacity:.6;height:${themPct}%;min-height:${them>0?'4px':'0'}"></div>
+      html += `</div><div style="display:flex;gap:6px">`;
+      innRuns.forEach(({inn})=>{
+        html += `<div style="flex:1;text-align:center;font-size:9px;color:var(--text2);font-weight:700">${inn}</div>`;
+      });
+      html += `</div>
+        <div style="display:flex;gap:14px;margin-top:8px;font-size:11px;font-weight:700">
+          <span style="color:var(--g)">■ Goldies</span>
+          <span style="color:var(--red);opacity:.7">■ Opp</span>
         </div>
       </div>`;
-    });
-    html += `</div>
-      <div style="display:flex;gap:6px">`;
-    innRuns.forEach(({inn})=>{
-      html += `<div style="flex:1;text-align:center;font-size:9px;color:var(--text2);font-weight:700">${inn}</div>`;
-    });
-    html += `</div>
-      <div style="display:flex;gap:14px;margin-top:8px;font-size:11px;font-weight:700">
-        <span style="color:var(--g)">■ Goldies</span>
-        <span style="color:var(--red);opacity:.7">■ Opp</span>
-      </div>
-    </div>`;
+    }
   }
 
   el.innerHTML = html;
@@ -3068,7 +3467,6 @@ function buildGMLineupSelector(){
     return;
   }
   let html = '';
-  // Show selected lineup order at top
   if(gmSelectedLineup.length){
     html += `<div style="margin-bottom:8px;font-size:11px;font-weight:700;color:var(--g)">Lineup (${gmSelectedLineup.length}): `;
     html += gmSelectedLineup.map((id,i)=>{
@@ -3093,11 +3491,7 @@ function buildGMLineupSelector(){
 
 function toggleGMLineupPlayer(id){
   const idx = gmSelectedLineup.indexOf(id);
-  if(idx >= 0){
-    gmSelectedLineup.splice(idx,1);
-  } else {
-    gmSelectedLineup.push(id);
-  }
+  if(idx >= 0){ gmSelectedLineup.splice(idx,1); } else { gmSelectedLineup.push(id); }
   buildGMLineupSelector();
 }
 
@@ -3115,10 +3509,7 @@ function gmStartGame(){
   gmDb.games.push({
     id, date:Date.now(), opponent, location, status:'active',
     lineup:[...gmSelectedLineup],
-    atBats:[], innings:[], outs:0,
-    currentInning:1,
-    bases:{first:null,second:null,third:null},
-    nextBatterIdx:0
+    events:[]
   });
   gmDb.activeGameId = id;
   saveGM();
@@ -3146,7 +3537,6 @@ function gmEndGame(){
 function updateGMCalendarSuggestions(){
   const wrap = document.getElementById('gm-start-upcoming-wrap');
   if(!wrap) return;
-  // Find any team with 'goldie' in name
   const goldieTeam = db.teams.find(t=>t.name.toLowerCase().includes('goldie'));
   if(!goldieTeam || !goldieTeam.calendar) { wrap.innerHTML = ''; return; }
   const upcoming = getUpcomingGames(goldieTeam.id);
@@ -3156,7 +3546,9 @@ function updateGMCalendarSuggestions(){
     const d = new Date(ev.start);
     const dateLbl = d.toDateString()===new Date().toDateString()?'TODAY':`${d.getMonth()+1}/${d.getDate()}`;
     const opp = extractOpponent(ev.summary||'', goldieTeam.name);
-    html += `<div class="upcoming-game" onclick="document.getElementById('gm-input-opponent').value='${(opp||ev.summary||'').replace(/'/g,"\\'")}';document.getElementById('gm-input-location').value='${(ev.location||'').replace(/'/g,"\\'")}';toast('Filled in!')">
+    const safeOpp = (opp||ev.summary||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    const safeLoc = (ev.location||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    html += `<div class="upcoming-game" onclick="document.getElementById('gm-input-opponent').value='${safeOpp}';document.getElementById('gm-input-location').value='${safeLoc}';toast('Filled in!')">
       <div class="ug-date">${dateLbl}</div>
       <div class="ug-info"><div class="ug-title">vs. ${opp||ev.summary}</div>${ev.location?`<div class="ug-loc">📍 ${ev.location}</div>`:''}</div>
       <span style="color:var(--g);font-size:11px;font-weight:700">Use →</span>
@@ -3169,8 +3561,11 @@ function updateGMCalendarSuggestions(){
 function openGMGameDetail(id){
   const game = gmDb.games.find(g=>g.id===id);
   if(!game) return;
-  const totals = gmScoreTotals(game);
+  const st = gmDeriveState(game);
+  const totals = {us:st.innings.reduce((s,i)=>s+(i.us||0),0),them:st.innings.reduce((s,i)=>s+(i.them||0),0)};
   const usLead = totals.us >= totals.them;
+  const gs = gmGameStats(game);
+
   let html = `
     <div style="margin-bottom:16px">
       <div style="font-size:19px;font-weight:800">Goldies vs. ${game.opponent||'Opponent'}</div>
@@ -3190,11 +3585,12 @@ function openGMGameDetail(id){
         <div style="font-size:32px;font-weight:900;color:${totals.them>totals.us?'var(--g)':'#fff'}">${totals.them}</div>
       </div>
     </div>`;
-  // Box score by inning
-  if(game.innings && game.innings.length){
-    let innH = game.innings.map((_,i)=>`<th>${i+1}</th>`).join('');
-    let usRow = game.innings.map(i=>`<td>${i.us}</td>`).join('');
-    let tRow = game.innings.map(i=>`<td>${i.them}</td>`).join('');
+
+  // Box score
+  if(st.innings.length){
+    let innH = st.innings.map((_,i)=>`<th>${i+1}</th>`).join('');
+    let usRow = st.innings.map(i=>`<td>${i.us||0}</td>`).join('');
+    let tRow  = st.innings.map(i=>`<td>${i.them||0}</td>`).join('');
     html += `<div style="overflow-x:auto;margin-bottom:16px"><table class="bbox-tbl">
       <thead><tr><th>Team</th>${innH}<th>R</th></tr></thead>
       <tbody>
@@ -3203,18 +3599,33 @@ function openGMGameDetail(id){
       </tbody>
     </table></div>`;
   }
+
+  // Batting summary
+  html += `<div class="sgrid" style="margin-bottom:16px">
+    <div class="si"><div class="sv sm">${gs.h}-${gs.ab}</div><div class="sl">H-AB</div></div>
+    <div class="si"><div class="sv sm">${avgFmt(gs.h,gs.ab)}</div><div class="sl">AVG</div></div>
+    <div class="si"><div class="sv sm">${gs.rbi}</div><div class="sl">RBI</div></div>
+    <div class="si"><div class="sv sm">${gs.r}</div><div class="sl">R</div></div>
+  </div>`;
+
+  // Delete game button
+  html += `<button class="btn btn-red btn-full" onclick="gmDeleteGame('${game.id}');closeModal('modal-game')" style="margin-bottom:16px">Delete Game</button>`;
+
   // Play log
-  if(game.atBats && game.atBats.length){
+  const paEvents = (game.events||[]).filter(ev=>ev.type==='pa');
+  if(paEvents.length){
     html += `<div class="card-title">Play Log</div><div class="plog">`;
-    game.atBats.forEach(ab=>{
-      const p = gmDb.roster.find(p=>p.id===ab.playerId);
-      const isHit=['1B','2B','3B','HR'].includes(ab.result);
-      const isWalk=['BB','HBP'].includes(ab.result);
+    paEvents.forEach(ev=>{
+      const p = gmDb.roster.find(r=>r.id===ev.playerId);
+      const isHit=['1B','2B','3B','HR'].includes(ev.result);
+      const isWalk=ev.result==='BB';
       const cls=isHit?'bh':isWalk?'bw':'bo';
+      const ro=ev.runners||{};
+      const runs=Object.values(ro).filter(d=>d==='scored').length;
       const extras=[];
-      if(ab.rbis>0)extras.push(ab.rbis+' RBI');
-      if(ab.scored)extras.push('Scored');
-      html+=`<div class="pentry"><div class="pbadge ${cls}">${ab.result}</div>
+      if(runs>0)extras.push(runs+' RBI');
+      if(ro[ev.playerId]==='scored')extras.push('Scored');
+      html+=`<div class="pentry"><div class="pbadge ${cls}">${ev.result}</div>
         <div><div class="pmain">${p?p.name:'?'}</div>${extras.length?`<div class="psub">${extras.join(' · ')}</div>`:''}</div></div>`;
     });
     html += `</div>`;
