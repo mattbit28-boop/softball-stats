@@ -175,6 +175,17 @@
     .dpill.sel-fball{border-color:var(--pur);background:rgba(167,139,250,.12);color:var(--pur)}
     .dpill.sel-fdiff{border-color:var(--g);background:var(--gl);color:var(--g)}
     .dpill.sel-ftype{border-color:var(--red);background:var(--redl);color:var(--red)}
+    .dpill.sel-runners-none{border-color:var(--muted);background:rgba(78,80,104,.2);color:var(--text2)}
+    .dpill.sel-runners-on{border-color:var(--blue);background:rgba(129,140,248,.12);color:var(--blue)}
+    .dpill.sel-runners-risp{border-color:var(--am);background:var(--aml);color:var(--am)}
+    /* Stat highlight */
+    .stat-up{color:var(--g)}
+    .stat-warn{color:var(--am)}
+    .stat-bad{color:var(--red)}
+    /* Secondary button row */
+    .psec-secondary{margin-top:6px;display:flex;justify-content:center}
+    .pb-tiny{padding:9px 12px;border-radius:10px;border:1px solid var(--border2);background:rgba(255,255,255,.04);color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;text-align:center}
+    .pb-tiny:active{opacity:.7}
     /* Detail chips on logged plays */
     .dchips{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
     .dchip{font-size:10px;font-weight:700;padding:2px 6px;border-radius:20px}
@@ -346,7 +357,16 @@
 <div id="modal-bat" class="mover hide">
   <div class="modal">
     <h2 id="bat-modal-title">Single</h2>
+    <div class="drow" style="margin-bottom:0">
+      <div class="drow-lbl">Runners On Base</div>
+      <div class="dpicks" id="runners-picks">
+        <button class="dpill sel-runners-none" onclick="selRunners('none',this)"><span class="dico">—</span>Empty</button>
+        <button class="dpill" onclick="selRunners('on',this)"><span class="dico">●</span>On Base</button>
+        <button class="dpill" onclick="selRunners('risp',this)"><span class="dico">🔥</span>RISP</button>
+      </div>
+    </div>
     <div id="bat-rbi-wrap">
+      <div class="divider" style="margin:12px 0 10px"></div>
       <div class="rbi-section">
         <div class="rbi-title">RBIs Driven In</div>
         <div class="rbipick" id="rbi-picker"></div>
@@ -362,7 +382,7 @@
       <div class="detail-sep-lbl">AB Details (optional)</div>
       <div class="detail-sep-line"></div>
     </div>
-    <div class="drow">
+    <div class="drow" id="bat-drow-dir">
       <div class="drow-lbl">Direction</div>
       <div class="dpicks">
         <button class="dpill" onclick="selDetail('dir','pull',this)"><span class="dico">◀</span>Pull</button>
@@ -370,7 +390,7 @@
         <button class="dpill" onclick="selDetail('dir','oppo',this)"><span class="dico">▶</span>Oppo</button>
       </div>
     </div>
-    <div class="drow">
+    <div class="drow" id="bat-drow-traj">
       <div class="drow-lbl">Trajectory</div>
       <div class="dpicks">
         <button class="dpill" onclick="selDetail('traj','gb',this)"><span class="dico">↘</span>GB</button>
@@ -379,7 +399,7 @@
         <button class="dpill" onclick="selDetail('traj','pu',this)"><span class="dico">↑</span>PU</button>
       </div>
     </div>
-    <div class="drow">
+    <div class="drow" id="bat-drow-contact">
       <div class="drow-lbl">Contact</div>
       <div class="dpicks">
         <button class="dpill" onclick="selDetail('contact','barrel',this)"><span class="dico">🎯</span>Barrel</button>
@@ -387,7 +407,7 @@
         <button class="dpill" onclick="selDetail('contact','weak',this)"><span class="dico">✗</span>Weak</button>
       </div>
     </div>
-    <div class="drow">
+    <div class="drow" id="bat-drow-pitch">
       <div class="drow-lbl">Pitch / AB</div>
       <div class="dpicks">
         <button class="dpill" onclick="selDetail('pitch','good',this)"><span class="dico">✓</span>Good Pitch</button>
@@ -461,12 +481,14 @@ function save(d){ localStorage.setItem('ds_data', JSON.stringify(d)); }
 
 let db = load();
 let currentStatsTab = 'overall';
+let currentStatsYear = new Date().getFullYear();
 
 // Temp state for pending bat log
 let pendingBat = null;
 let batScored = false;
 let batRBIs = 0;
 let batDetails = {dir:null, traj:null, contact:null, pitch:null};
+let batRunners = 'none';
 
 // Temp state for pending field log
 let pendingField = null;
@@ -501,7 +523,7 @@ function renderHeader(name){
     el.innerHTML = `<button class="hdr-btn danger" onclick="endGame()">End Game</button>`;
   }
   if(name==='teams'){
-    el.innerHTML = `<button class="hdr-btn am" onclick="openAddTeam()">+ Team</button>`;
+    el.innerHTML = `<button class="hdr-btn" onclick="exportData()" style="margin-right:6px">⬇ Backup</button><button class="hdr-btn am" onclick="openAddTeam()">+ Team</button>`;
   }
 }
 
@@ -557,6 +579,8 @@ function renderHome(){
 
   // Career summary
   const all = allStats();
+  const hitStreak = calcHitStreak();
+  const obStreak = calcOnBaseStreak();
   html += `
     <div class="card">
       <div class="card-title">Career Batting</div>
@@ -574,6 +598,18 @@ function renderHome(){
         <div class="si"><div class="sv sm">${all.rbi}</div><div class="sl">RBI</div></div>
         <div class="si"><div class="sv sm">${all.hr}</div><div class="sl">HR</div></div>
       </div>
+      ${hitStreak > 0 || obStreak > 0 ? `
+      <div class="divider"></div>
+      <div class="sgrid" style="grid-template-columns:1fr 1fr">
+        <div class="si">
+          <div class="sv sm" style="color:var(--am)">${hitStreak}</div>
+          <div class="sl">🔥 Hit Streak</div>
+        </div>
+        <div class="si">
+          <div class="sv sm" style="color:var(--blue)">${obStreak}</div>
+          <div class="sl">⚡ OB Streak</div>
+        </div>
+      </div>` : ''}
     </div>`;
 
   // Recent games
@@ -631,6 +667,7 @@ function renderLog(){
         <div class="loghdr-meta">${formatDate(game.date)} · ${game.position}</div>
       </div>
       <div class="loghdr-stats">
+        <div><div class="lhs-v">${gs.pa+1}</div><div class="lhs-l">PA #</div></div>
         <div><div class="lhs-v">${gs.h}-${gs.ab}</div><div class="lhs-l">H-AB</div></div>
         <div><div class="lhs-v">${gs.rbi}</div><div class="lhs-l">RBI</div></div>
         <div><div class="lhs-v">${gs.r}</div><div class="lhs-l">R</div></div>
@@ -647,16 +684,20 @@ function renderLog(){
       <div class="pg pg3" style="margin-bottom:8px">
         <button class="pb hr" onclick="logBat('HR')"><div class="pb-lbl">HR</div><div class="pb-dsc">Home Run</div></button>
         <button class="pb walk" onclick="logBat('BB')"><div class="pb-lbl">BB</div><div class="pb-dsc">Walk</div></button>
-        <button class="pb walk" onclick="logBat('HBP')"><div class="pb-lbl">HBP</div><div class="pb-dsc">Hit by Pitch</div></button>
+        <button class="pb out" onclick="logBat('K')"><div class="pb-lbl">K</div><div class="pb-dsc">Strikeout</div></button>
+      </div>
+      <div class="pg pg3" style="margin-bottom:8px">
+        <button class="pb out" onclick="logBat('GO')"><div class="pb-lbl">GO</div><div class="pb-dsc">Ground Out</div></button>
+        <button class="pb out" onclick="logBat('FO')"><div class="pb-lbl">FO</div><div class="pb-dsc">Fly Out</div></button>
+        <button class="pb out" onclick="logBat('LO')"><div class="pb-lbl">LO</div><div class="pb-dsc">Line Out</div></button>
       </div>
       <div class="pg pg3">
-        <button class="pb out" onclick="logBatQuick('K')"><div class="pb-lbl">K</div><div class="pb-dsc">Strikeout</div></button>
-        <button class="pb out" onclick="logBatQuick('Out')"><div class="pb-lbl">Out</div><div class="pb-dsc">In Play</div></button>
-        <button class="pb out" onclick="logBatQuick('SF')"><div class="pb-lbl">SF</div><div class="pb-dsc">Sac Fly</div></button>
-      </div>
-      <div class="pg pg2" style="margin-top:8px">
+        <button class="pb out" onclick="logBat('SF')"><div class="pb-lbl">SF</div><div class="pb-dsc">Sac Fly</div></button>
         <button class="pb reach" onclick="logBat('FC')"><div class="pb-lbl">FC</div><div class="pb-dsc">Fielder's Choice</div></button>
         <button class="pb reach" onclick="logBat('EReach')"><div class="pb-lbl">ROE</div><div class="pb-dsc">Reached on Error</div></button>
+      </div>
+      <div class="psec-secondary">
+        <button class="pb-tiny" onclick="logBat('HBP')">HBP — Hit by Pitch</button>
       </div>
     </div>
 
@@ -698,6 +739,8 @@ function renderEventEntry(ev, idx, gameId){
     const extras = [];
     if(ev.rbis>0) extras.push(`${ev.rbis} RBI`);
     if(ev.scored) extras.push('Scored');
+    if(ev.runners==='risp') extras.push('🔥 RISP');
+    else if(ev.runners==='on') extras.push('● On');
     const chips = [];
     if(ev.dir)     chips.push(`<span class="dchip dchip-dir">${DETAIL_LABELS.dir[ev.dir]||ev.dir}</span>`);
     if(ev.traj)    chips.push(`<span class="dchip dchip-traj">${DETAIL_LABELS.traj[ev.traj]||ev.traj}</span>`);
@@ -737,7 +780,8 @@ function renderEventEntry(ev, idx, gameId){
 function batLabel(r){
   const m={
     '1B':'Single','2B':'Double','3B':'Triple','HR':'Home Run',
-    'BB':'Walk','HBP':'Hit by Pitch','K':'Strikeout','Out':'Out',
+    'BB':'Walk','HBP':'Hit by Pitch','K':'Strikeout',
+    'GO':'Ground Out','FO':'Fly Out','LO':'Line Out',
     'SF':'Sacrifice Fly','FC':"Fielder's Choice",'EReach':'Reached on Error'
   };
   return m[r]||r;
@@ -747,15 +791,20 @@ function fieldLabel(p){
 }
 
 function logBat(result){
-  const isOut = ['K','Out','SF'].includes(result);
+  const isOut = ['K','GO','FO','LO','SF'].includes(result);
   pendingBat = result;
   batRBIs = 0;
   batScored = false;
   batDetails = {dir:null, traj:null, contact:null, pitch:null};
+  batRunners = 'none';
   document.getElementById('bat-modal-title').textContent = batLabel(result);
-  // Show RBI section only for non-outs
-  document.getElementById('bat-rbi-wrap').style.display = isOut ? 'none' : 'block';
-  if(!isOut){
+  // Reset runners picker to 'none'
+  document.querySelectorAll('#runners-picks .dpill').forEach(b=>b.className='dpill');
+  document.querySelector('#runners-picks .dpill').classList.add('sel-runners-none');
+  // Show RBI section only for non-outs (except SF which can have RBIs)
+  const showRBI = !isOut || result==='SF';
+  document.getElementById('bat-rbi-wrap').style.display = showRBI ? 'block' : 'none';
+  if(showRBI){
     let html = '';
     for(let i=0;i<=4;i++){
       html += `<button class="rbib${i===0?' sel':''}" onclick="selectRBI(${i})">${i}</button>`;
@@ -763,15 +812,16 @@ function logBat(result){
     document.getElementById('rbi-picker').innerHTML = html;
     document.getElementById('tog-scored').classList.remove('on');
   }
+  // Smart detail rows: outs only show pitch quality
+  const showContact = !isOut;
+  document.getElementById('bat-drow-dir').style.display = showContact ? 'block' : 'none';
+  document.getElementById('bat-drow-traj').style.display = showContact ? 'block' : 'none';
+  document.getElementById('bat-drow-contact').style.display = showContact ? 'block' : 'none';
   // Clear all detail pill selections
-  document.querySelectorAll('.dpill').forEach(b=>{
-    b.className='dpill';
-  });
+  document.querySelectorAll('#modal-bat .dpill').forEach(b=>{ b.className='dpill'; });
   openModal('modal-bat');
 }
 
-// Route quick-log outs through the same modal so details can be captured
-function logBatQuick(result){ logBat(result); }
 
 function selectRBI(n){
   batRBIs = n;
@@ -783,6 +833,13 @@ function selectRBI(n){
 function toggleScored(){
   batScored = !batScored;
   document.getElementById('tog-scored').classList.toggle('on', batScored);
+}
+
+function selRunners(val, btn){
+  batRunners = val;
+  const cls = {none:'sel-runners-none', on:'sel-runners-on', risp:'sel-runners-risp'}[val];
+  document.querySelectorAll('#runners-picks .dpill').forEach(b=>b.className='dpill');
+  btn.classList.add(cls);
 }
 
 function selDetail(group, val, btn){
@@ -799,7 +856,7 @@ function selDetail(group, val, btn){
 function confirmBat(){
   if(!db.activeGameId || !pendingBat) return;
   const game = db.games.find(g=>g.id===db.activeGameId);
-  game.events.push({type:'bat',result:pendingBat,rbis:batRBIs,scored:batScored,...batDetails});
+  game.events.push({type:'bat',result:pendingBat,rbis:batRBIs,scored:batScored,runners:batRunners,...batDetails});
   save(db);
   closeModal('modal-bat');
   const extras = [];
@@ -941,6 +998,28 @@ function statsTab(tab){
   renderStats(tab);
 }
 
+function setStatsYear(y){
+  currentStatsYear = y;
+  renderStats(currentStatsTab);
+}
+
+function getYearGames(){
+  if(currentStatsYear === 'all') return db.games;
+  return db.games.filter(g=>new Date(g.date).getFullYear()===currentStatsYear);
+}
+
+function renderYearPicker(){
+  const years = [...new Set(db.games.map(g=>new Date(g.date).getFullYear()))].sort((a,b)=>b-a);
+  if(years.length < 2) return '';
+  const opts = [{label:'All Time', val:'all'}, ...years.map(y=>({label:String(y),val:y}))];
+  return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+    ${opts.map(o=>`<button onclick="setStatsYear(${typeof o.val==='string'?`'${o.val}'`:o.val})"
+      style="padding:7px 14px;border-radius:20px;font-size:12px;font-weight:700;border:1px solid ${currentStatsYear===o.val?'var(--g)':'var(--border2)'};
+      background:${currentStatsYear===o.val?'var(--gl)':'transparent'};color:${currentStatsYear===o.val?'var(--g)':'var(--text2)'};cursor:pointer;-webkit-tap-highlight-color:transparent">
+      ${o.label}</button>`).join('')}
+  </div>`;
+}
+
 function renderStats(tab){
   const el = document.getElementById('statsContent');
   if(!db.games.length){
@@ -948,63 +1027,91 @@ function renderStats(tab){
     return;
   }
 
-  const all = allStats();
+  const yp = renderYearPicker();
+  const yearGames = getYearGames().filter(g=>g.id!==db.activeGameId);
+  const s = mergeStats(yearGames);
 
   if(tab==='overall'){
-    let html = `
+    let html = yp;
+    html += `
       <div class="card">
-        <div class="card-title">Career Overview</div>
+        <div class="card-title">Key Rates</div>
         <div class="sgrid">
-          <div class="si"><div class="sv">${avgFmt(all.h,all.ab)}</div><div class="sl">AVG</div></div>
-          <div class="si"><div class="sv sm">${obpFmt(all)}</div><div class="sl">OBP</div></div>
-          <div class="si"><div class="sv sm">${slgFmt(all)}</div><div class="sl">SLG</div></div>
-          <div class="si"><div class="sv sm">${opsFmt(all)}</div><div class="sl">OPS</div></div>
+          <div class="si"><div class="sv">${avgFmt(s.h,s.ab)}</div><div class="sl">AVG</div></div>
+          <div class="si"><div class="sv sm">${obpFmt(s)}</div><div class="sl">OBP</div></div>
+          <div class="si"><div class="sv sm">${wobaFmt(s)}</div><div class="sl">wOBA</div></div>
+          <div class="si"><div class="sv sm">${babipFmt(s)}</div><div class="sl">BABIP</div></div>
+        </div>
+        <div class="divider"></div>
+        <div class="sgrid" style="grid-template-columns:repeat(3,1fr)">
+          <div class="si"><div class="sv sm">${slgFmt(s)}</div><div class="sl">SLG</div></div>
+          <div class="si"><div class="sv sm">${isoFmt(s)}</div><div class="sl">ISO</div></div>
+          <div class="si"><div class="sv sm">${opsFmt(s)}</div><div class="sl">OPS</div></div>
         </div>
         <div class="divider"></div>
         <div class="sgrid-5">
-          <div class="si"><div class="sv sm">${all.g}</div><div class="sl">G</div></div>
-          <div class="si"><div class="sv sm">${all.pa}</div><div class="sl">PA</div></div>
-          <div class="si"><div class="sv sm">${all.ab}</div><div class="sl">AB</div></div>
-          <div class="si"><div class="sv sm">${all.h}</div><div class="sl">H</div></div>
-          <div class="si"><div class="sv sm">${all.hr}</div><div class="sl">HR</div></div>
+          <div class="si"><div class="sv sm">${s.g}</div><div class="sl">G</div></div>
+          <div class="si"><div class="sv sm">${s.pa}</div><div class="sl">PA</div></div>
+          <div class="si"><div class="sv sm">${s.ab}</div><div class="sl">AB</div></div>
+          <div class="si"><div class="sv sm">${s.h}</div><div class="sl">H</div></div>
+          <div class="si"><div class="sv sm" style="color:var(--g)">${s.hr}</div><div class="sl">HR</div></div>
         </div>
       </div>`;
 
-    // Per team table
+    const hitStrk = calcHitStreak();
+    const obStrk  = calcOnBaseStreak();
+    if(hitStrk > 0 || obStrk > 0){
+      html += `<div class="card">
+        <div class="card-title">Active Streaks</div>
+        <div class="sgrid" style="grid-template-columns:1fr 1fr">
+          <div class="si"><div class="sv" style="color:var(--am)">${hitStrk}</div><div class="sl">🔥 Hit Streak</div></div>
+          <div class="si"><div class="sv" style="color:var(--blue)">${obStrk}</div><div class="sl">⚡ OB Streak</div></div>
+        </div>
+      </div>`;
+    }
+
+    if(s.rrisp_ab > 0){
+      html += `<div class="card">
+        <div class="card-title">Clutch</div>
+        <div class="sgrid">
+          <div class="si"><div class="sv">${avgFmt(s.rrisp_h,s.rrisp_ab)}</div><div class="sl">RISP AVG</div></div>
+          <div class="si"><div class="sv sm">${s.rrisp_h}-${s.rrisp_ab}</div><div class="sl">H-AB</div></div>
+          <div class="si"><div class="sv sm">${s.rrisp_rbi}</div><div class="sl">RISP RBI</div></div>
+          <div class="si"><div class="sv sm">${s.ab>0?pct(s.rrisp_ab,s.ab):'—'}</div><div class="sl">RISP AB%</div></div>
+        </div>
+      </div>`;
+    }
+
     if(db.teams.length > 1){
       html += `<div class="card"><div class="card-title">By Team</div>
         <table class="stbl">
-          <thead><tr><th>Team</th><th>G</th><th>AB</th><th>H</th><th>HR</th><th class="hi">AVG</th></tr></thead>
+          <thead><tr><th>Team</th><th>G</th><th>AB</th><th>H</th><th>HR</th><th>ISO</th><th class="hi">AVG</th></tr></thead>
           <tbody>`;
       db.teams.forEach(t=>{
-        const ts = teamStats(t.id);
+        const ts = teamStats(t.id, yearGames);
         if(ts.g===0) return;
-        html += `<tr>
-          <td>${t.name}</td>
-          <td>${ts.g}</td><td>${ts.ab}</td><td>${ts.h}</td><td>${ts.hr}</td>
-          <td class="hi">${avgFmt(ts.h,ts.ab)}</td>
-        </tr>`;
+        html += `<tr><td>${t.name}</td><td>${ts.g}</td><td>${ts.ab}</td><td>${ts.h}</td><td>${ts.hr}</td><td>${isoFmt(ts)}</td><td class="hi">${avgFmt(ts.h,ts.ab)}</td></tr>`;
       });
       html += `</tbody></table></div>`;
     }
 
-    // Career games history
-    const games = [...db.games].filter(g=>g.id!==db.activeGameId).sort((a,b)=>b.date-a.date);
-    if(games.length){
+    if(yearGames.length){
       html += `<div class="card"><div class="card-title">Game Log</div>`;
-      games.forEach(g=>{
+      [...yearGames].sort((a,b)=>b.date-a.date).forEach(g=>{
         const t = db.teams.find(t=>t.id===g.teamId)||{name:'?',color:0};
         const gs = gameStats(g);
+        const hrBadge = gs.hr>0?` <span style="font-size:11px;color:var(--g);font-weight:800">${gs.hr}HR</span>`:'';
+        const eBadge  = gs.e>0 ?` <span style="font-size:11px;color:var(--red)">${gs.e}E</span>`:'';
         html += `
           <div class="hitem" onclick="openGameDetail('${g.id}')">
             <div class="dot tc-${t.color||0}">${t.name[0]}</div>
             <div class="hinfo">
-              <div class="htitle">${t.name}</div>
+              <div class="htitle">${t.name}${hrBadge}</div>
               <div class="hsub">${formatDate(g.date)} · ${g.position}</div>
             </div>
             <div class="hline">
-              <div class="hline-stat">${gs.h}-${gs.ab} · ${gs.rbi} RBI</div>
-              <div class="hline-avg">${avgFmt(gs.h,gs.ab)} · ${gs.po}PO ${gs.a}A ${gs.e}E</div>
+              <div class="hline-stat">${gs.h}-${gs.ab} · ${gs.rbi}RBI</div>
+              <div class="hline-avg">${avgFmt(gs.h,gs.ab)}${eBadge}</div>
             </div>
           </div>`;
       });
@@ -1014,58 +1121,151 @@ function renderStats(tab){
     el.innerHTML = html;
 
   } else if(tab==='batting'){
-    let html = renderABProfileCard(db.games.filter(g=>g.id!==db.activeGameId));
-    html += `<div class="card"><div class="card-title">Batting Stats</div>
+    let html = yp;
+    html += renderABProfileCard(yearGames);
+
+    const splits = calcSplitStats(yearGames);
+    const sRow = (key,lbl) => {
+      const sp = splits[key];
+      if(!sp||sp.ab===0) return '';
+      return `<tr><td>${lbl}</td><td>${sp.ab}</td><td>${sp.h}</td><td class="hi">${avgFmt(sp.h,sp.ab)}</td></tr>`;
+    };
+    if(Object.keys(splits).length){
+      html += `<div class="card"><div class="card-title">AVG by Contact Type</div>
+        <table class="stbl" style="margin-bottom:12px">
+          <thead><tr><th>Trajectory</th><th>AB</th><th>H</th><th class="hi">AVG</th></tr></thead>
+          <tbody>
+            ${sRow('traj_ld','→ Line Drive')}${sRow('traj_fb','↗ Fly Ball')}
+            ${sRow('traj_gb','↘ Ground Ball')}${sRow('traj_pu','↑ Pop Up')}
+          </tbody>
+        </table>
+        <table class="stbl" style="margin-bottom:12px">
+          <thead><tr><th>Direction</th><th>AB</th><th>H</th><th class="hi">AVG</th></tr></thead>
+          <tbody>
+            ${sRow('dir_pull','◀ Pull')}${sRow('dir_center','▲ Center')}${sRow('dir_oppo','▶ Oppo')}
+          </tbody>
+        </table>
+        <table class="stbl">
+          <thead><tr><th>Contact</th><th>AB</th><th>H</th><th class="hi">AVG</th></tr></thead>
+          <tbody>
+            ${sRow('contact_barrel','🎯 Barrel')}${sRow('contact_solid','✓ Solid')}${sRow('contact_weak','✗ Weak')}
+          </tbody>
+        </table>
+      </div>`;
+    }
+
+    const rows = [{label:'All',data:s}, ...db.teams.map(t=>({label:t.name,data:teamStats(t.id,yearGames)}))];
+
+    html += `<div class="card"><div class="card-title">Rate Stats</div>
       <table class="stbl">
-        <thead><tr><th>Team</th><th>G</th><th>PA</th><th>AB</th><th>H</th><th>2B</th><th>3B</th><th>HR</th></tr></thead>
+        <thead><tr><th>Team</th><th>AVG</th><th>wOBA</th><th>OBP</th><th>ISO</th><th>BABIP</th></tr></thead>
         <tbody>`;
-    const rows = [{label:'All', data: allStats()}, ...db.teams.map(t=>({label:t.name,data:teamStats(t.id)}))];
-    rows.forEach(({label,data:s})=>{
-      if(s.g===0 && label!=='All') return;
-      html += `<tr><td>${label}</td><td>${s.g}</td><td>${s.pa}</td><td>${s.ab}</td><td>${s.h}</td><td>${s.d}</td><td>${s.t}</td><td>${s.hr}</td></tr>`;
-    });
-    html += `</tbody></table></div>
-    <div class="card"><div class="card-title">Rate Stats</div>
-      <table class="stbl">
-        <thead><tr><th>Team</th><th>AVG</th><th>OBP</th><th>SLG</th><th>OPS</th><th>RBI</th><th>R</th></tr></thead>
-        <tbody>`;
-    rows.forEach(({label,data:s})=>{
-      if(s.g===0 && label!=='All') return;
-      html += `<tr>
-        <td>${label}</td>
-        <td class="hi">${avgFmt(s.h,s.ab)}</td>
-        <td>${obpFmt(s)}</td><td>${slgFmt(s)}</td><td>${opsFmt(s)}</td>
-        <td>${s.rbi}</td><td>${s.r}</td>
-      </tr>`;
+    rows.forEach(({label,data:rs})=>{
+      if(rs.g===0&&label!=='All') return;
+      html += `<tr><td>${label}</td><td class="hi">${avgFmt(rs.h,rs.ab)}</td><td>${wobaFmt(rs)}</td><td>${obpFmt(rs)}</td><td>${isoFmt(rs)}</td><td>${babipFmt(rs)}</td></tr>`;
     });
     html += `</tbody></table></div>`;
 
-    // BB, K breakdown
-    html += `<div class="card"><div class="card-title">Plate Discipline</div>
+    html += `<div class="card"><div class="card-title">Counting Stats</div>
       <table class="stbl">
-        <thead><tr><th>Team</th><th>BB</th><th>K</th><th>HBP</th><th>SF</th><th>BB%</th><th>K%</th></tr></thead>
+        <thead><tr><th>Team</th><th>AB</th><th>H</th><th>2B</th><th>3B</th><th>HR</th><th>RBI</th><th>R</th></tr></thead>
         <tbody>`;
-    rows.forEach(({label,data:s})=>{
-      if(s.g===0 && label!=='All') return;
-      const bbpct = s.pa>0?pct(s.bb,s.pa):'—';
-      const kpct = s.pa>0?pct(s.k,s.pa):'—';
-      html += `<tr><td>${label}</td><td>${s.bb}</td><td>${s.k}</td><td>${s.hbp}</td><td>${s.sf}</td><td>${bbpct}</td><td>${kpct}</td></tr>`;
+    rows.forEach(({label,data:rs})=>{
+      if(rs.g===0&&label!=='All') return;
+      html += `<tr><td>${label}</td><td>${rs.ab}</td><td>${rs.h}</td><td>${rs.d}</td><td>${rs.t}</td><td class="hi">${rs.hr}</td><td>${rs.rbi}</td><td>${rs.r}</td></tr>`;
     });
     html += `</tbody></table></div>`;
+
+    html += `<div class="card"><div class="card-title">Plate Discipline</div>
+      <table class="stbl">
+        <thead><tr><th>Team</th><th>BB</th><th>K</th><th>GO</th><th>FO</th><th>LO</th><th>BB%</th><th>K%</th></tr></thead>
+        <tbody>`;
+    rows.forEach(({label,data:rs})=>{
+      if(rs.g===0&&label!=='All') return;
+      html += `<tr><td>${label}</td><td>${rs.bb}</td><td>${rs.k}</td><td>${rs.go}</td><td>${rs.fo}</td><td>${rs.lo}</td><td>${rs.pa>0?pct(rs.bb,rs.pa):'—'}</td><td>${rs.pa>0?pct(rs.k,rs.pa):'—'}</td></tr>`;
+    });
+    html += `</tbody></table></div>`;
+
+    const batEvs = yearGames.flatMap(g=>g.events.filter(e=>e.type==='bat'));
+    const contactTagged = batEvs.filter(e=>e.contact).length;
+    const pitchTagged   = batEvs.filter(e=>e.pitch).length;
+    if(contactTagged>0 || pitchTagged>0){
+      const hh = batEvs.filter(e=>e.contact==='barrel').length;
+      const wk = batEvs.filter(e=>e.contact==='weak').length;
+      const ch = batEvs.filter(e=>e.pitch==='bad').length;
+      const gp = batEvs.filter(e=>e.pitch==='good').length;
+      html += `<div class="card"><div class="card-title">Quality Metrics</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          ${contactTagged>0?`<div>
+            <div class="detail-sep-lbl" style="margin-bottom:8px">Contact (${contactTagged})</div>
+            ${pctBar(hh,contactTagged,'var(--am)','🎯 Hard Hit')}
+            ${pctBar(batEvs.filter(e=>e.contact==='solid').length,contactTagged,'var(--g)','✓ Solid')}
+            ${pctBar(wk,contactTagged,'var(--red)','✗ Weak')}
+          </div>`:''}
+          ${pitchTagged>0?`<div>
+            <div class="detail-sep-lbl" style="margin-bottom:8px">Pitch Sel. (${pitchTagged})</div>
+            ${pctBar(gp,pitchTagged,'var(--g)','✓ Zone')}
+            ${pctBar(ch,pitchTagged,'var(--red)','✗ Chase')}
+          </div>`:''}
+        </div>
+      </div>`;
+    }
+
+    if(s.rrisp_ab>0){
+      html += `<div class="card"><div class="card-title">Clutch / RISP</div>
+        <div class="sgrid">
+          <div class="si"><div class="sv">${avgFmt(s.rrisp_h,s.rrisp_ab)}</div><div class="sl">RISP AVG</div></div>
+          <div class="si"><div class="sv sm">${s.rrisp_h}-${s.rrisp_ab}</div><div class="sl">H-AB</div></div>
+          <div class="si"><div class="sv sm">${s.rrisp_rbi}</div><div class="sl">RISP RBI</div></div>
+          <div class="si"><div class="sv sm">${avgFmt(s.h,s.ab)}</div><div class="sl">Overall</div></div>
+        </div>
+      </div>`;
+    }
 
     el.innerHTML = html;
 
   } else if(tab==='fielding'){
-    let html = `<div class="card"><div class="card-title">Fielding Stats</div>
+    let html = yp;
+    const frows = [{label:'All',data:s}, ...db.teams.map(t=>({label:t.name,data:teamStats(t.id,yearGames)}))];
+    html += `<div class="card"><div class="card-title">Fielding Stats</div>
       <table class="stbl">
-        <thead><tr><th>Team</th><th>G</th><th>PO</th><th>A</th><th>E</th><th>FPCT</th></tr></thead>
+        <thead><tr><th>Team</th><th>G</th><th>PO</th><th>A</th><th>E</th><th>FPCT</th><th>RF/G</th></tr></thead>
         <tbody>`;
-    const rows = [{label:'All',data:allStats()}, ...db.teams.map(t=>({label:t.name,data:teamStats(t.id)}))];
-    rows.forEach(({label,data:s})=>{
-      if(s.g===0 && label!=='All') return;
-      html += `<tr><td>${label}</td><td>${s.g}</td><td>${s.po}</td><td>${s.a}</td><td>${s.e}</td><td class="hi">${fpctFmt(s.po,s.a,s.e)}</td></tr>`;
+    frows.forEach(({label,data:rs})=>{
+      if(rs.g===0&&label!=='All') return;
+      const rf = rs.g>0?((rs.po+rs.a)/rs.g).toFixed(1):'—';
+      html += `<tr><td>${label}</td><td>${rs.g}</td><td>${rs.po}</td><td>${rs.a}</td><td${rs.e>0?' class="stat-bad"':''}>${rs.e}</td><td class="hi">${fpctFmt(rs.po,rs.a,rs.e)}</td><td>${rf}</td></tr>`;
     });
     html += `</tbody></table></div>`;
+
+    const fp = calcFieldProfile(yearGames);
+    if(fp.fball.total>0||fp.fdiff.total>0||fp.ftype.total>0){
+      html += `<div class="card"><div class="card-title">Fielding Profile</div>`;
+      if(fp.fball.total>0){
+        html += `<div class="detail-sep-lbl" style="margin-bottom:8px">Ball Type (${fp.fball.total})</div>
+          ${pctBar(fp.fball.gb,fp.fball.total,'var(--am)','↘ Ground Ball')}
+          ${pctBar(fp.fball.ld,fp.fball.total,'var(--g)','→ Line Drive')}
+          ${pctBar(fp.fball.fb,fp.fball.total,'var(--blue)','↗ Fly Ball')}
+          ${pctBar(fp.fball.pu,fp.fball.total,'var(--muted)','↑ Pop Up')}`;
+      }
+      if(fp.fdiff.total>0){
+        html += `<div class="divider"></div>
+          <div class="detail-sep-lbl" style="margin-bottom:8px">Difficulty — ${fp.fdiff.total} plays rated</div>
+          ${pctBar(fp.fdiff.webgem,fp.fdiff.total,'var(--pur)','⭐ Web Gem')}
+          ${pctBar(fp.fdiff.tough,fp.fdiff.total,'var(--blue)','💪 Tough')}
+          ${pctBar(fp.fdiff.routine,fp.fdiff.total,'var(--g)','✓ Routine')}`;
+      }
+      if(fp.ftype.total>0){
+        html += `<div class="divider"></div>
+          <div class="detail-sep-lbl" style="margin-bottom:8px">Error Breakdown — ${fp.ftype.total} errors</div>
+          ${pctBar(fp.ftype.bobble,fp.ftype.total,'var(--red)','👋 Bobble')}
+          ${pctBar(fp.ftype.badthrow,fp.ftype.total,'var(--red)','🎯 Bad Throw')}
+          ${pctBar(fp.ftype.lostit,fp.ftype.total,'var(--red)','🌞 Lost It')}
+          ${pctBar(fp.ftype.drop,fp.ftype.total,'var(--red)','✗ Drop')}`;
+      }
+      html += `</div>`;
+    }
+
     el.innerHTML = html;
   }
 }
@@ -1096,7 +1296,7 @@ function renderTeams(){
         </div>
         <div class="tactions">
           <button class="btn btn-ghost btn-sm" onclick="openEditTeam('${t.id}')">Edit</button>
-          <button class="btn btn-sm" style="background:#fee2e2;color:#991b1b" onclick="deleteTeam('${t.id}')">Del</button>
+          <button class="btn btn-red btn-sm" onclick="deleteTeam('${t.id}')">Del</button>
         </div>
       </div>`;
   });
@@ -1226,7 +1426,8 @@ function openGameDetail(id){
 // ─── STATS CALC ──────────────────────────────────────────────────────────────
 
 function gameStats(game){
-  let ab=0,h=0,d=0,t=0,hr=0,rbi=0,r=0,bb=0,k=0,hbp=0,sf=0,po=0,a=0,e=0;
+  let ab=0,h=0,d=0,t=0,hr=0,rbi=0,r=0,bb=0,k=0,go=0,fo=0,lo=0,hbp=0,sf=0,po=0,a=0,e=0;
+  let rrisp_ab=0,rrisp_h=0,rrisp_rbi=0;
   game.events.forEach(ev=>{
     if(ev.type==='bat'){
       const res = ev.result;
@@ -1237,10 +1438,18 @@ function gameStats(game){
       if(res==='HR') hr++;
       if(res==='BB') bb++;
       if(res==='K') k++;
+      if(res==='GO') go++;
+      if(res==='FO') fo++;
+      if(res==='LO') lo++;
       if(res==='HBP') hbp++;
       if(res==='SF') sf++;
       rbi += (ev.rbis||0);
       if(ev.scored) r++;
+      if(ev.runners==='risp'){
+        if(!['BB','HBP','SF'].includes(res)) rrisp_ab++;
+        if(['1B','2B','3B','HR'].includes(res)) rrisp_h++;
+        rrisp_rbi += (ev.rbis||0);
+      }
     }
     if(ev.type==='field'){
       if(ev.play==='PO') po++;
@@ -1249,28 +1458,81 @@ function gameStats(game){
     }
   });
   const pa = ab+bb+hbp+sf;
-  return {ab,h,d,t,hr,rbi,r,bb,k,hbp,sf,po,a,e,pa,g:1};
+  return {ab,h,d,t,hr,rbi,r,bb,k,go,fo,lo,hbp,sf,po,a,e,pa,rrisp_ab,rrisp_h,rrisp_rbi,g:1};
 }
 
-function teamStats(teamId){
-  const games = db.games.filter(g=>g.teamId===teamId);
+function teamStats(teamId, srcGames){
+  const games = (srcGames||db.games).filter(g=>g.teamId===teamId);
   return mergeStats(games);
 }
 
-function allStats(){
-  return mergeStats(db.games);
+function allStats(srcGames){
+  return mergeStats(srcGames||db.games);
 }
 
 function mergeStats(games){
-  let ab=0,h=0,d=0,t=0,hr=0,rbi=0,r=0,bb=0,k=0,hbp=0,sf=0,po=0,a=0,e=0,g=0;
+  let ab=0,h=0,d=0,t=0,hr=0,rbi=0,r=0,bb=0,k=0,go=0,fo=0,lo=0,hbp=0,sf=0,po=0,a=0,e=0,g=0;
+  let rrisp_ab=0,rrisp_h=0,rrisp_rbi=0;
   games.forEach(game=>{
     const gs = gameStats(game);
     ab+=gs.ab;h+=gs.h;d+=gs.d;t+=gs.t;hr+=gs.hr;
-    rbi+=gs.rbi;r+=gs.r;bb+=gs.bb;k+=gs.k;hbp+=gs.hbp;sf+=gs.sf;
-    po+=gs.po;a+=gs.a;e+=gs.e;g++;
+    rbi+=gs.rbi;r+=gs.r;bb+=gs.bb;k+=gs.k;go+=gs.go;fo+=gs.fo;lo+=gs.lo;
+    hbp+=gs.hbp;sf+=gs.sf;po+=gs.po;a+=gs.a;e+=gs.e;g++;
+    rrisp_ab+=gs.rrisp_ab;rrisp_h+=gs.rrisp_h;rrisp_rbi+=gs.rrisp_rbi;
   });
   const pa=ab+bb+hbp+sf;
-  return {g,ab,h,d,t,hr,rbi,r,bb,k,hbp,sf,po,a,e,pa};
+  return {g,ab,h,d,t,hr,rbi,r,bb,k,go,fo,lo,hbp,sf,po,a,e,pa,rrisp_ab,rrisp_h,rrisp_rbi};
+}
+
+// ─── STREAKS & EXPORT ────────────────────────────────────────────────────────
+
+function calcHitStreak(){
+  const completed = db.games.filter(g=>g.id!==db.activeGameId).sort((a,b)=>b.date-a.date);
+  let streak = 0;
+  for(const g of completed){
+    const gs = gameStats(g);
+    if(gs.h > 0) streak++;
+    else break;
+  }
+  return streak;
+}
+
+function calcOnBaseStreak(){
+  const completed = db.games.filter(g=>g.id!==db.activeGameId).sort((a,b)=>b.date-a.date);
+  let streak = 0;
+  for(const g of completed){
+    const gs = gameStats(g);
+    if(gs.h + gs.bb + gs.hbp > 0) streak++;
+    else break;
+  }
+  return streak;
+}
+
+function exportData(){
+  const json = localStorage.getItem('ds_data') || '{}';
+  const blob = new Blob([json], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'diamond-stats-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Backup downloaded!');
+}
+
+function calcFieldProfile(games){
+  const evs = games.flatMap(g=>g.events.filter(e=>e.type==='field'));
+  const good = evs.filter(e=>e.play!=='E');
+  const errs = evs.filter(e=>e.play==='E');
+  const cnt = (arr,f,v) => arr.filter(e=>e[f]===v).length;
+  const tot = (arr,f) => arr.filter(e=>e[f]).length;
+  return {
+    fball:  {gb:cnt(evs,'fball','gb'),ld:cnt(evs,'fball','ld'),fb:cnt(evs,'fball','fb'),pu:cnt(evs,'fball','pu'),total:tot(evs,'fball')},
+    fdiff:  {routine:cnt(good,'fdiff','routine'),tough:cnt(good,'fdiff','tough'),webgem:cnt(good,'fdiff','webgem'),total:tot(good,'fdiff')},
+    ftype:  {bobble:cnt(errs,'ftype','bobble'),badthrow:cnt(errs,'ftype','badthrow'),lostit:cnt(errs,'ftype','lostit'),drop:cnt(errs,'ftype','drop'),total:tot(errs,'ftype')}
+  };
 }
 
 // ─── FORMATTERS ──────────────────────────────────────────────────────────────
@@ -1351,8 +1613,41 @@ function opsFmt(s){
   const ops = obp+slg;
   return ops===0?'.000':('.'+String(Math.round(ops*1000)).padStart(3,'0'));
 }
+function wobaFmt(s){
+  const num = 0.69*s.bb + 0.72*s.hbp + 0.89*(s.h-s.d-s.t-s.hr) + 1.27*s.d + 1.62*s.t + 2.10*s.hr;
+  const den = s.ab + s.bb + s.hbp + s.sf;
+  if(den===0) return '.000';
+  return '.'+String(Math.round(num/den*1000)).padStart(3,'0');
+}
+function babipFmt(s){
+  const den = s.ab - s.k - s.hr + s.sf;
+  if(den<=0) return '.000';
+  return '.'+String(Math.round((s.h-s.hr)/den*1000)).padStart(3,'0');
+}
+function isoFmt(s){
+  if(s.ab===0) return '.000';
+  return '.'+String(Math.round((s.d + 2*s.t + 3*s.hr)/s.ab*1000)).padStart(3,'0');
+}
 function fpctFmt(po,a,e){ const tot=po+a+e; return tot===0?'—':((po+a)/tot).toFixed(3).replace('0.','.')||'1.000'; }
 function pct(n,d){ return d===0?'—':(n/d*100).toFixed(1)+'%'; }
+
+function calcSplitStats(games){
+  const batEvs = games.flatMap(g=>g.events.filter(e=>e.type==='bat'));
+  const isHit = r=>['1B','2B','3B','HR'].includes(r);
+  const isAB  = r=>!['BB','HBP','SF'].includes(r);
+  const res = {};
+  const add = (key, ev) => {
+    if(!res[key]) res[key]={ab:0,h:0};
+    if(isAB(ev.result)) res[key].ab++;
+    if(isHit(ev.result)) res[key].h++;
+  };
+  batEvs.forEach(ev=>{
+    if(ev.traj)    add('traj_'+ev.traj, ev);
+    if(ev.dir)     add('dir_'+ev.dir, ev);
+    if(ev.contact) add('contact_'+ev.contact, ev);
+  });
+  return res;
+}
 
 function formatDate(ts){
   const d = new Date(ts);
