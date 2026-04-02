@@ -1978,19 +1978,7 @@ function getUpcomingGames(teamId){
   const team = db.teams.find(t=>t.id===teamId);
   if(!team || !team.calendar) return [];
   const now = Date.now() - 3600000 * 3;
-  const events = (team.calendar.events || []).filter(e=>e.start >= now);
-  // Deduplicate: TeamSideline lists both "A vs B" and "B vs A" for same game night.
-  // Keep only the first entry per calendar-date per opponent pair.
-  const seen = new Set();
-  return events.filter(ev=>{
-    const d = new Date(ev.start);
-    const dateKey = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-    const opp = extractOpponent(ev.summary||'', team.name);
-    const key = `${dateKey}|${opp.toLowerCase()}`;
-    if(seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  return (team.calendar.events || []).filter(e=>e.start >= now);
 }
 
 function openCalendarModal(teamId){
@@ -2022,26 +2010,35 @@ function openCalendarModal(teamId){
     </div>`;
 
   if(allEvents > 0){
+    const nights = Math.round(allEvents / 2);
     html += `<div style="background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.15);border-radius:10px;padding:10px 12px;margin-bottom:12px">
-      <div style="font-size:12px;font-weight:700;color:var(--g)">✓ Calendar loaded — ${allEvents} events, ${upcoming.length} upcoming</div>
+      <div style="font-size:12px;font-weight:700;color:var(--g)">✓ Calendar loaded — ${nights} double-header nights, ${upcoming.length} games left</div>
       <div style="font-size:11px;color:var(--text2);margin-top:2px">Imported ${formatDate(team.calendar.importedAt||Date.now())}</div>
     </div>`;
   }
 
   if(upcoming.length){
-    html += `<div class="card-title" style="margin-bottom:8px">Upcoming Games (${upcoming.length})</div>`;
-    upcoming.slice(0,6).forEach(ev=>{
+    // Group by date for DH display
+    const calByDate = {};
+    upcoming.forEach(ev=>{
+      const dk = new Date(ev.start).toDateString();
+      if(!calByDate[dk]) calByDate[dk]=[];
+      calByDate[dk].push(ev);
+    });
+    html += `<div class="card-title" style="margin-bottom:8px">Upcoming Schedule</div>`;
+    upcoming.slice(0,8).forEach(ev=>{
       const d = new Date(ev.start);
       const today = new Date();
-      const tomorrow = new Date(today); tomorrow.setDate(today.getDate()+1);
       const isToday = d.toDateString() === today.toDateString();
-      const isTomorrow = d.toDateString() === tomorrow.toDateString();
-      const dateLbl = isToday ? 'TODAY' : isTomorrow ? 'TMRW' : `${d.getMonth()+1}/${d.getDate()}`;
-      const timeLbl = d.getHours() ? d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}) : '';
+      const dateLbl = isToday ? 'TODAY' : `${d.getMonth()+1}/${d.getDate()}`;
+      const timeLbl = d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+      const opp = extractOpponent(ev.summary||'', team.name);
+      const nightGames = calByDate[d.toDateString()] || [];
+      const gameNum = nightGames.length > 1 ? nightGames.indexOf(ev) + 1 : null;
       html += `<div class="cal-item">
-        <div class="cal-date">${dateLbl}${timeLbl?`<br><span style="font-size:9px;font-weight:600;opacity:.7">${timeLbl}</span>`:''}</div>
+        <div class="cal-date">${dateLbl}<br><span style="font-size:9px;font-weight:600;opacity:.7">${timeLbl}</span></div>
         <div class="cal-info">
-          <div class="cal-title">${ev.summary||'Game'}</div>
+          <div class="cal-title">vs. ${opp||ev.summary}${gameNum?` <span style="font-size:10px;color:var(--am);font-weight:800"> · G${gameNum}</span>`:''}</div>
           ${ev.location?`<div class="cal-loc">📍 ${ev.location}</div>`:''}
         </div>
       </div>`;
@@ -2100,9 +2097,18 @@ function renderUpcomingSuggestions(teamId){
   const upcoming = getUpcomingGames(teamId);
   if(!upcoming.length) return '';
   const team = db.teams.find(t=>t.id===teamId);
-  const show = upcoming.slice(0,4);
+  // Group by calendar date to detect double headers
+  const byDate = {};
+  upcoming.forEach(ev=>{
+    const d = new Date(ev.start);
+    const k = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    if(!byDate[k]) byDate[k] = [];
+    byDate[k].push(ev);
+  });
+  // Show next 6 entries = 3 nights of double headers
+  const show = upcoming.slice(0,6);
   return `<div class="fgrp">
-    <label class="flbl">📅 Upcoming Scheduled Games</label>
+    <label class="flbl">📅 Upcoming Double Headers</label>
     ${show.map(ev=>{
       const d = new Date(ev.start);
       const today = new Date();
@@ -2112,11 +2118,15 @@ function renderUpcomingSuggestions(teamId){
       const dateLbl = isToday ? 'TODAY' : isTomorrow ? 'TMRW' : `${d.getMonth()+1}/${d.getDate()}`;
       const timeLbl = d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
       const opp = extractOpponent(ev.summary||'', team ? team.name : '');
+      // Determine Game 1 vs Game 2 within this night
+      const dateKey = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      const nightGames = byDate[dateKey] || [];
+      const gameNum = nightGames.length > 1 ? nightGames.indexOf(ev) + 1 : null;
       const safeOpp = (opp||ev.summary||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
       return `<div class="upcoming-game" onclick="useScheduledGame('${safeOpp}')">
         <div class="ug-date">${dateLbl}<br><span style="font-size:9px;opacity:.7">${timeLbl}</span></div>
         <div class="ug-info">
-          <div class="ug-title">vs. ${opp||ev.summary}</div>
+          <div class="ug-title">vs. ${opp||ev.summary}${gameNum?` <span style="font-size:10px;color:var(--am);font-weight:800">G${gameNum}</span>`:''}</div>
           ${ev.location?`<div class="ug-loc">📍 ${ev.location}</div>`:''}
         </div>
         <span style="color:var(--g);font-size:11px;font-weight:700;flex-shrink:0">Use →</span>
