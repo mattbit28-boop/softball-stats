@@ -144,6 +144,29 @@
     .bw{background:rgba(129,140,248,.13);color:var(--blue)}
     .bf{background:rgba(167,139,250,.13);color:var(--pur)}
     .be{background:rgba(251,191,36,.13);color:var(--am)}
+    /* Defensive play badge colors */
+    .bd-po{background:rgba(74,222,128,.13);color:var(--g)}
+    .bd-a{background:rgba(129,140,248,.13);color:var(--blue)}
+    .bd-dp{background:rgba(167,139,250,.18);color:var(--pur)}
+    .bd-e{background:rgba(248,113,113,.15);color:var(--red)}
+    .bd-rob{background:rgba(251,191,36,.15);color:var(--am)}
+    .bd-misc{background:rgba(255,255,255,.08);color:var(--text2)}
+    /* Def player picker */
+    .def-player-btn{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--border2);border-radius:11px;background:#13151F;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .1s;text-align:left}
+    .def-player-btn.sel{border-color:var(--g);background:var(--gl)}
+    .def-player-btn .dpn{font-size:14px;font-weight:700;color:var(--text)}
+    .def-player-btn .dpp{font-size:11px;color:var(--text2)}
+    .def-play-btn{padding:12px 4px;border:1.5px solid var(--border2);border-radius:11px;background:#13151F;font-size:12px;font-weight:800;color:var(--text2);cursor:pointer;text-align:center;-webkit-tap-highlight-color:transparent;transition:all .1s;line-height:1.3}
+    .def-play-btn .dico{font-size:16px;display:block;margin-bottom:3px}
+    .def-play-btn.sel{border-color:var(--g);background:var(--gl);color:var(--g)}
+    .def-pos-btn{padding:8px 12px;border:1.5px solid var(--border2);border-radius:9px;background:#13151F;font-size:13px;font-weight:800;color:var(--text2);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .1s}
+    .def-pos-btn.sel{border-color:var(--blue);background:rgba(129,140,248,.12);color:var(--blue)}
+    /* Def section in scorebook */
+    .def-section{background:linear-gradient(135deg,#131828,#0f1420);border:1px solid rgba(129,140,248,.18);border-radius:14px;padding:14px;margin-bottom:10px}
+    .def-section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .def-section-title{font-size:12px;font-weight:800;color:var(--blue);text-transform:uppercase;letter-spacing:.5px}
+    .def-log-entry{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+    .def-log-entry:last-child{border-bottom:none}
     .pmain{font-size:13px;font-weight:700;color:var(--text)}
     .psub{font-size:12px;color:var(--text2)}
     .pundo{margin-left:auto;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px;line-height:1;-webkit-tap-highlight-color:transparent}
@@ -836,6 +859,32 @@
     </div>
     <button class="btn btn-g btn-full btn-lg" onclick="gmConfirmInningEnd()">Next Inning →</button>
     <button class="btn btn-ghost btn-full" onclick="closeModal('modal-gm-inning')" style="margin-top:8px">Cancel</button>
+  </div>
+</div>
+
+<!-- MODAL: GM Defensive Play -->
+<div id="modal-gm-def" class="mover hide" onclick="closeModalOnBg(event,'modal-gm-def')">
+  <div class="modal">
+    <button class="mclose" onclick="closeModal('modal-gm-def')">✕</button>
+    <h2>Log Defensive Play</h2>
+    <div class="fgrp">
+      <label class="flbl">Player</label>
+      <div id="gm-def-player-list" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto"></div>
+    </div>
+    <div class="fgrp">
+      <label class="flbl">Play Type</label>
+      <div id="gm-def-play-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px"></div>
+    </div>
+    <div class="fgrp">
+      <label class="flbl">Position (optional)</label>
+      <div id="gm-def-pos-grid" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+    </div>
+    <div class="fgrp">
+      <label class="flbl">Notes (optional)</label>
+      <textarea class="finput" id="gm-def-note" rows="2" maxlength="160" placeholder="e.g. Full dive, threw from LF on the run, turned a great DP…" style="resize:none;font-size:14px;padding:10px 12px"></textarea>
+    </div>
+    <button class="btn btn-g btn-full btn-lg mt12" onclick="gmSaveDefPlay()">Log It</button>
+    <button class="btn btn-ghost btn-full" onclick="closeModal('modal-gm-def')" style="margin-top:8px">Cancel</button>
   </div>
 </div>
 
@@ -2962,6 +3011,137 @@ function renderGMHome(el){
   }
 
   el.innerHTML = html;
+}
+
+// ── GM Defensive Plays ───────────────────────────────────────────────────────
+
+const GM_DEF_PLAYS = [
+  {key:'PO',    label:'Putout',         badge:'PO',   ico:'🧤', cls:'bd-po'},
+  {key:'A',     label:'Assist',         badge:'A',    ico:'💪', cls:'bd-a'},
+  {key:'DP',    label:'Double Play',    badge:'DP',   ico:'⚡', cls:'bd-dp'},
+  {key:'snag',  label:'Great Snag',     badge:'SNag', ico:'🌟', cls:'bd-po'},
+  {key:'dive',  label:'Diving Stop',    badge:'Dive', ico:'🤸', cls:'bd-po'},
+  {key:'rob',   label:'Robbed HR',      badge:'Rob',  ico:'🚫', cls:'bd-rob'},
+  {key:'relay', label:'Relay / Cutoff', badge:'Relay',ico:'🎯', cls:'bd-a'},
+  {key:'E',     label:'Error',          badge:'E',    ico:'❌', cls:'bd-e'},
+  {key:'misc',  label:'Notable Play',   badge:'★',    ico:'✨', cls:'bd-misc'},
+];
+
+const GM_DEF_POSITIONS = ['P','C','1B','2B','3B','SS','LF','LC','RC','RF'];
+
+let gmDefSelectedPid  = null;
+let gmDefSelectedPlay = null;
+let gmDefSelectedPos  = null;
+
+function openGMDefModal(){
+  const ag = gmDb.activeGameId ? gmDb.games.find(g=>g.id===gmDb.activeGameId) : null;
+  if(!ag){ toast('Start a game first'); return; }
+
+  gmDefSelectedPid  = null;
+  gmDefSelectedPlay = null;
+  gmDefSelectedPos  = null;
+
+  // Player list
+  const roster = gmDb.roster.filter(p=>p.active!==false);
+  const playerHTML = roster.length
+    ? roster.map(p=>`
+        <button class="def-player-btn" id="def-p-${p.id}" onclick="gmDefSelectPlayer('${p.id}')">
+          <div style="width:28px;height:28px;border-radius:50%;background:rgba(74,222,128,.15);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:var(--g);flex-shrink:0">${p.number||'—'}</div>
+          <div><div class="dpn">${p.name}</div><div class="dpp">${p.position||'—'}</div></div>
+        </button>`).join('')
+    : `<div style="color:var(--text2);font-size:13px">Add players to roster first.</div>`;
+  document.getElementById('gm-def-player-list').innerHTML = playerHTML;
+
+  // Play type grid
+  document.getElementById('gm-def-play-grid').innerHTML = GM_DEF_PLAYS.map(d=>`
+    <button class="def-play-btn" id="def-play-${d.key}" onclick="gmDefSelectPlay('${d.key}')">
+      <span class="dico">${d.ico}</span>${d.label}
+    </button>`).join('');
+
+  // Position grid
+  document.getElementById('gm-def-pos-grid').innerHTML = GM_DEF_POSITIONS.map(pos=>`
+    <button class="def-pos-btn" id="def-pos-${pos}" onclick="gmDefSelectPos('${pos}')">${pos}</button>`).join('');
+
+  document.getElementById('gm-def-note').value = '';
+  openModal('modal-gm-def');
+}
+
+function gmDefSelectPlayer(pid){
+  gmDefSelectedPid = pid;
+  document.querySelectorAll('.def-player-btn').forEach(b=>b.classList.remove('sel'));
+  const btn = document.getElementById('def-p-'+pid);
+  if(btn) btn.classList.add('sel');
+}
+function gmDefSelectPlay(key){
+  gmDefSelectedPlay = key;
+  document.querySelectorAll('.def-play-btn').forEach(b=>b.classList.remove('sel'));
+  const btn = document.getElementById('def-play-'+key);
+  if(btn) btn.classList.add('sel');
+}
+function gmDefSelectPos(pos){
+  gmDefSelectedPos = gmDefSelectedPos===pos ? null : pos;
+  document.querySelectorAll('.def-pos-btn').forEach(b=>b.classList.remove('sel'));
+  if(gmDefSelectedPos){
+    const btn = document.getElementById('def-pos-'+pos);
+    if(btn) btn.classList.add('sel');
+  }
+}
+
+function gmSaveDefPlay(){
+  if(!gmDefSelectedPid){ toast('Select a player'); return; }
+  if(!gmDefSelectedPlay){ toast('Select a play type'); return; }
+  const ag = gmDb.activeGameId ? gmDb.games.find(g=>g.id===gmDb.activeGameId) : null;
+  if(!ag) return;
+  const st = gmDeriveState(ag);
+  const note = (document.getElementById('gm-def-note').value||'').trim();
+  ag.events.push({
+    type:'def',
+    playerId: gmDefSelectedPid,
+    play: gmDefSelectedPlay,
+    position: gmDefSelectedPos||null,
+    note: note||null,
+    inning: st.inning,
+    ts: Date.now()
+  });
+  saveGM();
+  closeModal('modal-gm-def');
+  const p = gmDb.roster.find(r=>r.id===gmDefSelectedPid);
+  const d = GM_DEF_PLAYS.find(d=>d.key===gmDefSelectedPlay);
+  toast(`${p?p.name.split(' ')[0]:'Player'} — ${d?d.label:'Play'} logged!`);
+  renderGMBook(document.getElementById('gmContent'));
+}
+
+function gmDefPanelHTML(ag, st){
+  const defEvents = (ag.events||[]).filter(ev=>ev.type==='def');
+  // Show last 5 def plays as quick summary, collapsed by default if none
+  let html = `<div class="def-section">
+    <div class="def-section-hd">
+      <span class="def-section-title">🛡 Defensive Plays${defEvents.length?' ('+defEvents.length+')':''}</span>
+      <button class="btn btn-ghost btn-sm" onclick="openGMDefModal()" style="padding:7px 14px;font-size:12px;border-color:rgba(129,140,248,.3);color:var(--blue)">+ Log Play</button>
+    </div>`;
+  if(!defEvents.length){
+    html += `<div style="font-size:13px;color:var(--text2);text-align:center;padding:8px 0">No defensive plays logged yet — tap + Log Play to add one.</div>`;
+  } else {
+    const recent = [...defEvents].reverse().slice(0,5);
+    recent.forEach((ev,i)=>{
+      const p    = gmDb.roster.find(r=>r.id===ev.playerId);
+      const info = GM_DEF_PLAYS.find(d=>d.key===ev.play)||{label:ev.play,badge:ev.play,ico:'⚾',cls:'bd-misc'};
+      const origIdx = ag.events.indexOf(ev);
+      html += `<div class="def-log-entry">
+        <div class="pbadge ${info.cls}" style="font-size:10px;flex-shrink:0;width:32px;height:32px;border-radius:8px">${info.badge}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:800;color:var(--text)">${info.ico} ${p?p.name:'?'}<span style="font-size:11px;font-weight:500;color:var(--text2);margin-left:6px">${info.label}</span></div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px">Inn ${ev.inning||'?'}${ev.position?' · '+ev.position:''}${ev.note?' · <em>'+ev.note.slice(0,60)+'</em>':''}</div>
+        </div>
+        <button class="pundo" onclick="gmDeleteEvent(${origIdx})" title="Delete" style="font-size:16px">×</button>
+      </div>`;
+    });
+    if(defEvents.length>5){
+      html += `<div style="font-size:11px;color:var(--text2);text-align:center;padding-top:8px">+${defEvents.length-5} more in game log below</div>`;
+    }
+  }
+  html += `</div>`;
+  return html;
 }
 
 // ── GM Scorebook ─────────────────────────────────────────────────────────────
