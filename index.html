@@ -2535,6 +2535,21 @@ gmDb.games.forEach(g=>{
 saveGM();
 if(!gmDb.strategy) gmDb.strategy = {lineupPlan:[], positionPlan:{}, chat:[]};
 
+// Migrate old outfield positions: CF→LC, SF→RC (one-time fix)
+const POS_MIGRATE = {'CF':'LC','SF':'RC'};
+let _posMigrated = false;
+gmDb.roster.forEach(p=>{
+  if(POS_MIGRATE[p.position]){ p.position = POS_MIGRATE[p.position]; _posMigrated = true; }
+});
+// Also migrate field plan values
+if(gmDb.strategy.positionPlan){
+  Object.keys(gmDb.strategy.positionPlan).forEach(pid=>{
+    const old = gmDb.strategy.positionPlan[pid];
+    if(POS_MIGRATE[old]){ gmDb.strategy.positionPlan[pid] = POS_MIGRATE[old]; _posMigrated = true; }
+  });
+}
+if(_posMigrated) saveGM();
+
 let gmCurrentTab = 'home';
 // Pending PA state for the PA modal
 let gmPendingResult = null;
@@ -3054,32 +3069,47 @@ function renderGMBook(el){
       <button class="btn btn-ghost" style="flex:1" onclick="openGMInningEnd()">End Inning →</button>
     </div>`;
 
-  // Recent plays this game
-  const paEvents = (ag.events||[]).filter(ev=>ev.type==='pa');
-  if(paEvents.length){
-    const recent = [...ag.events].reverse().filter(ev=>ev.type==='pa').slice(0,10);
+  // Defensive plays section
+  html += gmDefPanelHTML(ag, st);
+
+  // Recent plays this game — batting + defense combined
+  const allGameEvents = (ag.events||[]).filter(ev=>ev.type==='pa'||ev.type==='def');
+  if(allGameEvents.length){
+    const recent = [...ag.events].reverse().filter(ev=>ev.type==='pa'||ev.type==='def').slice(0,15);
     html += `<div class="card" style="margin-top:4px"><div class="card-title">This Game</div><div class="plog">`;
     recent.forEach(ev=>{
       const p = gmDb.roster.find(r=>r.id===ev.playerId);
-      const isHit = ['1B','2B','3B','HR'].includes(ev.result);
-      const isWalk = ev.result === 'BB';
-      const isOut = ['K','GO','FO','LO','SF','FC','ROE','CS','HR_OUT'].includes(ev.result);
-      const cls = isHit?'bh':isWalk?'bw':isOut?'bo':'be';
-      const ro = ev.runners||{};
-      const runs = Object.values(ro).filter(d=>d==='scored').length;
-      const extras = [];
-      if(runs>0) extras.push(runs+' RBI');
-      if(ro[ev.playerId]==='scored') extras.push('Scored');
       const origIdx = ag.events.indexOf(ev);
-      html += `<div class="pentry">
-        <div class="pbadge ${cls}">${ev.result}</div>
-        <div class="flex1">
-          <div class="pmain">${p?p.name:'?'}${extras.length?' · <span class="psub-inline">'+extras.join(' · ')+'</span>':''}</div>
-          <div class="psub">Inn ${ev.inning||'?'}</div>
-        </div>
-        <button class="pundo" onclick="gmEditEvent(${origIdx})" title="Edit">✏</button>
-        <button class="pundo" onclick="gmDeleteEvent(${origIdx})" title="Delete">×</button>
-      </div>`;
+      if(ev.type==='def'){
+        const defInfo = GM_DEF_PLAYS.find(d=>d.key===ev.play)||{label:ev.play, cls:'bd'};
+        html += `<div class="pentry">
+          <div class="pbadge ${defInfo.cls||'bd'}" style="font-size:10px">${defInfo.badge||ev.play}</div>
+          <div class="flex1">
+            <div class="pmain">${p?p.name:'?'} <span class="psub-inline">${defInfo.label}</span></div>
+            <div class="psub">Inn ${ev.inning||'?'}${ev.position?' · '+ev.position:''}</div>
+          </div>
+          <button class="pundo" onclick="gmDeleteEvent(${origIdx})" title="Delete">×</button>
+        </div>`;
+      } else {
+        const isHit = ['1B','2B','3B','HR'].includes(ev.result);
+        const isWalk = ev.result === 'BB';
+        const isOut = ['K','GO','FO','LO','SF','FC','ROE','CS','HR_OUT'].includes(ev.result);
+        const cls = isHit?'bh':isWalk?'bw':isOut?'bo':'be';
+        const ro = ev.runners||{};
+        const runs = Object.values(ro).filter(d=>d==='scored').length;
+        const extras = [];
+        if(runs>0) extras.push(runs+' RBI');
+        if(ro[ev.playerId]==='scored') extras.push('Scored');
+        html += `<div class="pentry">
+          <div class="pbadge ${cls}">${ev.result}</div>
+          <div class="flex1">
+            <div class="pmain">${p?p.name:'?'}${extras.length?' · <span class="psub-inline">'+extras.join(' · ')+'</span>':''}</div>
+            <div class="psub">Inn ${ev.inning||'?'}</div>
+          </div>
+          <button class="pundo" onclick="gmEditEvent(${origIdx})" title="Edit">✏</button>
+          <button class="pundo" onclick="gmDeleteEvent(${origIdx})" title="Delete">×</button>
+        </div>`;
+      }
     });
     html += `</div></div>`;
   }
@@ -3833,8 +3863,8 @@ const POS_FIT = {
   '3B': {great:['3B'],         ok:['1B','SS','2B']},
   'SS': {great:['SS'],         ok:['2B','3B']},
   'LF': {great:['LF','OF'],    ok:['LC','RC','RF']},
-  'LC': {great:['LC','CF','OF'], ok:['LF','RC','RF']},
-  'RC': {great:['RC','CF','OF'], ok:['LC','LF','RF']},
+  'LC': {great:['LC','OF'],    ok:['LF','RC','RF']},
+  'RC': {great:['RC','OF'],    ok:['LC','LF','RF']},
   'RF': {great:['RF','OF'],    ok:['RC','LC','LF']},
 };
 
