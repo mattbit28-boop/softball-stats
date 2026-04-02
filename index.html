@@ -308,6 +308,58 @@
     .ug-info{flex:1}
     .ug-title{font-size:13px;font-weight:700;color:var(--text)}
     .ug-loc{font-size:11px;color:var(--text2)}
+
+    /* ─── GM MODE ───────────────────────────────────────────── */
+    .gm-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .gm-scoreline{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;padding:16px;background:linear-gradient(135deg,#1B2040 0%,#13162A 100%);border:1px solid rgba(74,222,128,.2);border-radius:16px;margin-bottom:12px}
+    .gm-score-side{text-align:center}
+    .gm-score-name{font-size:11px;font-weight:700;opacity:.45;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .gm-score-num{font-size:44px;font-weight:900;color:#fff;line-height:1}
+    .gm-score-num.lead{color:var(--g)}
+    .gm-score-mid{text-align:center}
+    .gm-inn-lbl{font-size:10px;font-weight:700;color:rgba(74,222,128,.8);text-transform:uppercase;letter-spacing:.4px}
+    .gout{width:14px;height:14px;border-radius:50%;border:2px solid rgba(248,113,113,.3);background:transparent;display:inline-block;margin:0 3px}
+    .gout.on{background:var(--red);border-color:var(--red)}
+    .diamond-wrap{display:flex;justify-content:center;margin:8px 0 12px;position:relative}
+    .diamond{width:120px;height:120px;position:relative}
+    .dbase{width:22px;height:22px;background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);border-radius:3px;position:absolute;transform:rotate(45deg);transition:all .2s}
+    .dbase.on{background:var(--am);border-color:var(--am);box-shadow:0 0 12px rgba(251,191,36,.5)}
+    .dbase-lbl{position:absolute;font-size:9px;font-weight:800;color:rgba(255,255,255,.35);transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;width:100%;height:100%}
+    .dbase.on .dbase-lbl{color:#0A0D14}
+    .d-2b{top:2px;left:50%;margin-left:-11px}
+    .d-3b{top:50%;margin-top:-11px;left:2px}
+    .d-1b{top:50%;margin-top:-11px;right:2px}
+    .d-home{bottom:2px;left:50%;margin-left:-11px}
+    .batter-card{display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(74,222,128,.07);border:1px solid rgba(74,222,128,.2);border-radius:13px;margin-bottom:10px}
+    .batter-num{font-size:22px;font-weight:900;color:var(--g);min-width:36px;text-align:center}
+    .batter-info{flex:1}
+    .batter-name{font-size:16px;font-weight:800;color:var(--text)}
+    .batter-pos{font-size:12px;color:var(--text2)}
+    .batter-game-stat{font-size:12px;color:var(--g);font-weight:700}
+    .rb-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:8px}
+    .rb{padding:13px 4px;border-radius:11px;border:1px solid transparent;font-size:16px;font-weight:800;cursor:pointer;text-align:center;-webkit-tap-highlight-color:transparent;transition:opacity .1s,transform .1s}
+    .rb:active{opacity:.7;transform:scale(.93)}
+    .rb-sub{font-size:10px;font-weight:500;opacity:.55;display:block;margin-top:2px}
+    .rb.hit{background:rgba(74,222,128,.1);color:var(--g);border-color:rgba(74,222,128,.2)}
+    .rb.xbh{background:rgba(74,222,128,.17);color:#86EFAC;border-color:rgba(74,222,128,.3)}
+    .rb.homer{background:linear-gradient(135deg,rgba(74,222,128,.22),rgba(34,197,94,.32));color:var(--g);border-color:rgba(74,222,128,.5)}
+    .rb.walk{background:rgba(129,140,248,.1);color:var(--blue);border-color:rgba(129,140,248,.2)}
+    .rb.out{background:rgba(248,113,113,.1);color:var(--red);border-color:rgba(248,113,113,.2)}
+    .rb.reach{background:rgba(251,191,36,.1);color:var(--am);border-color:rgba(251,191,36,.2)}
+    .rb.wide{grid-column:span 2}
+    .pa-mod{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:14px;margin-bottom:10px}
+    .pa-mod-title{font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px}
+    .gm-pitem{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:13px;margin-bottom:8px}
+    .gm-pnum{font-size:18px;font-weight:900;color:var(--am);min-width:36px;text-align:center}
+    .gm-pinfo{flex:1}
+    .gm-pname{font-size:15px;font-weight:700;color:var(--text)}
+    .gm-ppos{font-size:12px;color:var(--text2)}
+    .lineup-slot{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:11px;background:rgba(255,255,255,.04);border:1px solid var(--border);margin-bottom:6px}
+    .lineup-spot{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.1);border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--text2);flex-shrink:0}
+    .lineup-spot.active{background:var(--g);border-color:var(--g);color:#0A0D14}
+    .gm-stat-bar{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+    .gm-stat-bar-name{font-size:13px;font-weight:700;color:var(--text);min-width:100px}
+    .gm-stat-bar-val{font-size:12px;font-weight:800;color:var(--text2);min-width:40px;text-align:right}
   </style>
 </head>
 <body>
@@ -344,6 +396,17 @@
   <div id="scr-teams" class="scr">
     <div id="teamsContent"></div>
   </div>
+
+  <!-- GM MODE -->
+  <div id="scr-gm" class="scr">
+    <div class="seg" id="gm-seg">
+      <button class="segb act" onclick="gmTab('home')">Home</button>
+      <button class="segb" onclick="gmTab('book')">Scorebook</button>
+      <button class="segb" onclick="gmTab('roster')">Roster</button>
+      <button class="segb" onclick="gmTab('stats')">Stats</button>
+    </div>
+    <div id="gmContent"></div>
+  </div>
 </main>
 
 <!-- Bottom Nav -->
@@ -363,6 +426,10 @@
   <button class="nb" id="nb-teams" onclick="showScr('teams')">
     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
     Teams
+  </button>
+  <button class="nb" id="nb-gm" onclick="showScr('gm')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l5 2.18V11c0 3.5-2.33 6.79-5 7.93C9.33 17.79 7 14.5 7 11V7.18L12 5z"/></svg>
+    GM
   </button>
 </nav>
 
@@ -548,6 +615,64 @@
   </div>
 </div>
 
+<!-- MODAL: GM Start Game -->
+<div id="modal-gm-start" class="mover hide" onclick="closeModalOnBg(event,'modal-gm-start')">
+  <div class="modal">
+    <button class="mclose" onclick="closeModal('modal-gm-start')">✕</button>
+    <h2>New Team Game</h2>
+    <div class="fgrp">
+      <label class="flbl">Opponent</label>
+      <input class="finput" id="gm-input-opponent" type="text" placeholder="e.g. Thunder Hawks" maxlength="40" autocomplete="off">
+    </div>
+    <div id="gm-start-upcoming-wrap"></div>
+    <div class="fgrp">
+      <label class="flbl">Location (optional)</label>
+      <input class="finput" id="gm-input-location" type="text" placeholder="e.g. Field 3" maxlength="50" autocomplete="off">
+    </div>
+    <div class="fgrp">
+      <label class="flbl">Batting Order — tap to select in order</label>
+      <div id="gm-lineup-selector"></div>
+    </div>
+    <button class="btn btn-g btn-full btn-lg mt12" onclick="gmStartGame()">⚾ Play Ball!</button>
+  </div>
+</div>
+
+<!-- MODAL: GM Add/Edit Player -->
+<div id="modal-gm-player" class="mover hide" onclick="closeModalOnBg(event,'modal-gm-player')">
+  <div class="modal">
+    <button class="mclose" onclick="closeModal('modal-gm-player')">✕</button>
+    <h2 id="modal-gm-player-title">Add Player</h2>
+    <div class="fgrp">
+      <label class="flbl">Name</label>
+      <input class="finput" id="gm-input-name" type="text" placeholder="Full name" maxlength="30">
+    </div>
+    <div class="fgrp">
+      <label class="flbl">Jersey #</label>
+      <input class="finput" id="gm-input-number" type="number" placeholder="e.g. 7" min="0" max="99">
+    </div>
+    <div class="fgrp">
+      <label class="flbl">Position</label>
+      <div class="posgrid" id="pos-grid-gm-player"></div>
+    </div>
+    <input type="hidden" id="gm-input-player-id">
+    <button class="btn btn-g btn-full btn-lg mt12" onclick="saveGMPlayer()">Save Player</button>
+  </div>
+</div>
+
+<!-- MODAL: GM Inning End -->
+<div id="modal-gm-inning" class="mover hide">
+  <div class="modal">
+    <h2 id="gm-inning-modal-title">End of Inning</h2>
+    <p style="color:var(--text2);font-size:14px;margin-bottom:16px">How many runs did the opponent score?</p>
+    <div style="display:flex;align-items:center;justify-content:center;gap:20px;margin-bottom:24px">
+      <button class="scard-adj" onclick="gmInnAdj(-1)">−</button>
+      <span id="gm-inn-runs" style="font-size:48px;font-weight:900;color:var(--text);min-width:60px;text-align:center">0</span>
+      <button class="scard-adj" onclick="gmInnAdj(1)">+</button>
+    </div>
+    <button class="btn btn-g btn-full btn-lg" onclick="gmConfirmInningEnd()">Next Inning →</button>
+  </div>
+</div>
+
 <div id="toast" class="toast"></div>
 
 <script>
@@ -589,6 +714,7 @@ function showScr(name){
   if(name==='log') renderLog();
   if(name==='stats') renderStats(currentStatsTab);
   if(name==='teams') renderTeams();
+  if(name==='gm') renderGM(gmCurrentTab);
 }
 
 function renderHeader(name){
@@ -605,6 +731,16 @@ function renderHeader(name){
   }
   if(name==='teams'){
     el.innerHTML = `<button class="hdr-btn" onclick="exportData()" style="margin-right:6px">⬇ Backup</button><button class="hdr-btn am" onclick="openAddTeam()">+ Team</button>`;
+  }
+  if(name==='gm'){
+    const ag = gmDb.activeGameId ? gmDb.games.find(g=>g.id===gmDb.activeGameId) : null;
+    if(gmCurrentTab==='home' && !ag){
+      el.innerHTML = `<button class="hdr-btn am" onclick="openGMStartGame()">New Game</button>`;
+    } else if(gmCurrentTab==='home' && ag){
+      el.innerHTML = `<button class="hdr-btn danger" onclick="gmEndGame()">End Game</button>`;
+    } else if(gmCurrentTab==='roster'){
+      el.innerHTML = `<button class="hdr-btn am" onclick="openGMAddPlayer()">+ Player</button>`;
+    }
   }
 }
 
@@ -2164,6 +2300,927 @@ function toast(msg){
   el.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(()=>el.classList.remove('show'), 2000);
+}
+
+// ─── GM MODE ─────────────────────────────────────────────────────────────────
+
+function loadGM(){
+  return JSON.parse(localStorage.getItem('gm_data')||'null') || {roster:[], games:[], activeGameId:null};
+}
+function saveGM(){ localStorage.setItem('gm_data', JSON.stringify(gmDb)); }
+
+let gmDb = loadGM();
+let gmCurrentTab = 'home';
+// Pending PA state
+let gmPendingResult = null;
+let gmPendingRBIs = 0;
+let gmPendingScored = false;
+// Lineup builder state
+let gmSelectedLineup = [];
+// Inning end pending runs counter
+let gmInnPendingRuns = 0;
+
+function gmTab(tab){
+  gmCurrentTab = tab;
+  document.querySelectorAll('#gm-seg .segb').forEach((b,i)=>{
+    b.classList.toggle('act', ['home','book','roster','stats'][i]===tab);
+  });
+  renderHeader('gm');
+  renderGM(tab);
+}
+
+function renderGM(tab){
+  const el = document.getElementById('gmContent');
+  if(!el) return;
+  if(tab==='home')   renderGMHome(el);
+  if(tab==='book')   renderGMBook(el);
+  if(tab==='roster') renderGMRoster(el);
+  if(tab==='stats')  renderGMStats(el);
+}
+
+// ── GM Home ──────────────────────────────────────────────────────────────────
+function renderGMHome(el){
+  const ag = gmDb.activeGameId ? gmDb.games.find(g=>g.id===gmDb.activeGameId) : null;
+  let html = '';
+
+  if(ag){
+    const totals = gmScoreTotals(ag);
+    const usLead = totals.us >= totals.them;
+    html += `
+      <div class="gm-scoreline">
+        <div class="gm-score-side">
+          <div class="gm-score-name">Goldies</div>
+          <div class="gm-score-num${usLead?' lead':''}">${totals.us}</div>
+        </div>
+        <div class="gm-score-mid">
+          <div class="gm-inn-lbl">INN ${ag.currentInning}</div>
+          <div style="font-size:18px;font-weight:900;color:rgba(255,255,255,.2)">–</div>
+          <div style="margin-top:4px">${[0,1,2].map(i=>`<span class="gout${i<ag.outs?' on':''}"></span>`).join('')}</div>
+        </div>
+        <div class="gm-score-side">
+          <div class="gm-score-name">${ag.opponent||'Opponent'}</div>
+          <div class="gm-score-num${totals.them>totals.us?' lead':''}">${totals.them}</div>
+        </div>
+      </div>
+      <button class="btn btn-g btn-full btn-lg" style="margin-bottom:12px" onclick="gmTab('book')">Open Scorebook →</button>`;
+  } else {
+    html += `
+      <div class="gbanner" style="text-align:center;padding:24px 16px;margin-bottom:12px">
+        <div style="font-size:40px;margin-bottom:10px">🏆</div>
+        <div style="font-size:17px;font-weight:800;margin-bottom:6px">GM Mode</div>
+        <div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:18px">Scorebook &amp; team analytics for the Goldies</div>
+        <button class="btn btn-g btn-full" onclick="openGMStartGame()">Start New Game</button>
+      </div>`;
+  }
+
+  // Season record
+  const finished = gmDb.games.filter(g=>g.status==='final');
+  let wins=0, losses=0;
+  finished.forEach(g=>{
+    const t = gmScoreTotals(g);
+    if(t.us > t.them) wins++; else losses++;
+  });
+  const teamSt = gmTeamStats(gmDb.games.filter(g=>g.status==='final'));
+
+  html += `
+    <div class="card">
+      <div class="card-title">Season Summary</div>
+      <div class="sgrid">
+        <div class="si"><div class="sv">${wins}-${losses}</div><div class="sl">Record</div></div>
+        <div class="si"><div class="sv sm">${teamSt.avg}</div><div class="sl">AVG</div></div>
+        <div class="si"><div class="sv sm">${teamSt.r}</div><div class="sl">R</div></div>
+        <div class="si"><div class="sv sm">${teamSt.rbi}</div><div class="sl">RBI</div></div>
+      </div>
+    </div>`;
+
+  // Recent games
+  const recent = [...gmDb.games].sort((a,b)=>b.date-a.date).slice(0,6);
+  if(recent.length){
+    html += `<div class="card"><div class="card-title">Games</div>`;
+    recent.forEach(g=>{
+      if(g.id===gmDb.activeGameId){
+        html += `<div class="hitem" onclick="gmTab('book')">
+          <div class="dot" style="background:var(--g);color:#0A0D14;font-size:11px;font-weight:800">LIVE</div>
+          <div class="hinfo"><div class="htitle">vs. ${g.opponent||'Opponent'}</div><div class="hsub">${formatDate(g.date)} · Active</div></div>
+        </div>`;
+      } else {
+        const t = gmScoreTotals(g);
+        const won = t.us > t.them;
+        html += `<div class="hitem" onclick="openGMGameDetail('${g.id}')">
+          <div class="dot" style="background:${won?'rgba(74,222,128,.2)':'rgba(248,113,113,.15)'};color:${won?'var(--g)':'var(--red)'};font-size:13px;font-weight:800">${won?'W':'L'}</div>
+          <div class="hinfo"><div class="htitle">vs. ${g.opponent||'Opponent'}</div><div class="hsub">${formatDate(g.date)}</div></div>
+          <div class="hline"><div class="hline-stat">${t.us}–${t.them}</div></div>
+        </div>`;
+      }
+    });
+    html += `</div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+// ── GM Scorebook ─────────────────────────────────────────────────────────────
+function renderGMBook(el){
+  const ag = gmDb.activeGameId ? gmDb.games.find(g=>g.id===gmDb.activeGameId) : null;
+  if(!ag){
+    el.innerHTML = `
+      <div class="empty">
+        <div class="empty-ico">📓</div>
+        <h3>No Active Game</h3>
+        <p>Start a game from the GM Home tab to open the scorebook.</p>
+        <button class="btn btn-g btn-lg" onclick="gmTab('home')">Go to Home</button>
+      </div>`;
+    return;
+  }
+
+  const totals = gmScoreTotals(ag);
+  const usLead = totals.us >= totals.them;
+  const batter = gmCurrentBatter(ag);
+  const gs = gmGameStats(ag);
+
+  let html = `
+    <div class="gm-scoreline">
+      <div class="gm-score-side">
+        <div class="gm-score-name">Goldies</div>
+        <div class="gm-score-num${usLead?' lead':''}">${totals.us}</div>
+      </div>
+      <div class="gm-score-mid">
+        <div class="gm-inn-lbl">INN ${ag.currentInning}</div>
+        <div style="font-size:18px;font-weight:900;color:rgba(255,255,255,.2)">–</div>
+        <div style="margin-top:4px">${[0,1,2].map(i=>`<span class="gout${i<ag.outs?' on':''}"></span>`).join('')}</div>
+      </div>
+      <div class="gm-score-side">
+        <div class="gm-score-name">${ag.opponent||'Opponent'}</div>
+        <div class="gm-score-num${totals.them>totals.us?' lead':''}">${totals.them}</div>
+      </div>
+    </div>
+
+    <div class="diamond-wrap">
+      <div class="diamond">
+        <div class="dbase d-2b${ag.bases.second?' on':''}"><span class="dbase-lbl">2B</span></div>
+        <div class="dbase d-3b${ag.bases.third?' on':''}"><span class="dbase-lbl">3B</span></div>
+        <div class="dbase d-1b${ag.bases.first?' on':''}"><span class="dbase-lbl">1B</span></div>
+        <div class="dbase d-home" style="opacity:.3"><span class="dbase-lbl">H</span></div>
+      </div>
+    </div>`;
+
+  // Current batter
+  if(batter){
+    const bStats = gmPlayerSeasonStats(batter.id);
+    const gameABs = ag.atBats.filter(ab=>ab.playerId===batter.id);
+    const gameH = gameABs.filter(ab=>['1B','2B','3B','HR'].includes(ab.result)).length;
+    const gameAB = gameABs.filter(ab=>!['BB','HBP','SF'].includes(ab.result)).length;
+    html += `
+      <div class="batter-card">
+        <div class="batter-num">${batter.number||'—'}</div>
+        <div class="batter-info">
+          <div class="batter-name">${batter.name}</div>
+          <div class="batter-pos">${batter.position||''} · ${bStats.avg} AVG</div>
+        </div>
+        <div class="batter-game-stat">${gameH}-${gameAB} today</div>
+      </div>`;
+  } else {
+    html += `<div class="batter-card"><div class="batter-info"><div class="batter-name" style="color:var(--text2)">No lineup set</div></div></div>`;
+  }
+
+  // PA modifier (inline — shown after tapping a result)
+  if(gmPendingResult !== null){
+    const isOut = ['K','GO','FO','LO'].includes(gmPendingResult);
+    const isSF  = gmPendingResult === 'SF';
+    if(isOut && !isSF){
+      // Confirm area for outs
+      html += `
+        <div class="pa-mod">
+          <div class="pa-mod-title">Confirm Out — ${gmResultLabel(gmPendingResult)}</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-red btn-full" onclick="gmConfirmPA()">✓ Log Out</button>
+            <button class="btn btn-ghost" onclick="gmCancelResult()">Cancel</button>
+          </div>
+        </div>`;
+    } else {
+      // Hits/BB/HBP/reach/SF: show RBI + scored pickers
+      const maxRBI = 4;
+      let rbiHtml = '';
+      for(let i=0;i<=maxRBI;i++){
+        rbiHtml += `<button class="rbib${i===gmPendingRBIs?' sel':''}" onclick="gmSelectRBI(${i})">${i}</button>`;
+      }
+      html += `
+        <div class="pa-mod">
+          <div class="pa-mod-title">${gmResultLabel(gmPendingResult)}</div>
+          <div class="rbi-title">RBIs Scored</div>
+          <div class="rbipick" style="margin-bottom:12px">${rbiHtml}</div>
+          <div class="drow-lbl" style="margin-bottom:6px">Batter Scored?</div>
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <button class="dpill${gmPendingScored?' ':'  sel-scored-no '}" onclick="gmSelScored(false,this)"><span class="dico">✗</span>No</button>
+            <button class="dpill${gmPendingScored?' sel-scored-yes':''}" onclick="gmSelScored(true,this)"><span class="dico">✓</span>Scored</button>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-g btn-full" onclick="gmConfirmPA()">Log It</button>
+            <button class="btn btn-ghost" onclick="gmCancelResult()">Cancel</button>
+          </div>
+        </div>`;
+    }
+  }
+
+  // Result buttons (only shown when not in pending state)
+  if(gmPendingResult === null){
+    html += `
+      <div class="rb-grid">
+        <button class="rb hit" onclick="gmLogResult('1B')">1B<span class="rb-sub">Single</span></button>
+        <button class="rb xbh" onclick="gmLogResult('2B')">2B<span class="rb-sub">Double</span></button>
+        <button class="rb xbh" onclick="gmLogResult('3B')">3B<span class="rb-sub">Triple</span></button>
+        <button class="rb homer" onclick="gmLogResult('HR')">HR<span class="rb-sub">Homer</span></button>
+        <button class="rb walk" onclick="gmLogResult('BB')">BB<span class="rb-sub">Walk</span></button>
+        <button class="rb walk" onclick="gmLogResult('HBP')">HBP<span class="rb-sub">Hit by P</span></button>
+        <button class="rb out" onclick="gmLogResult('K')">K<span class="rb-sub">Strikeout</span></button>
+        <button class="rb out" onclick="gmLogResult('GO')">GO<span class="rb-sub">Ground Out</span></button>
+        <button class="rb out" onclick="gmLogResult('FO')">FO<span class="rb-sub">Fly Out</span></button>
+        <button class="rb out" onclick="gmLogResult('LO')">LO<span class="rb-sub">Line Out</span></button>
+        <button class="rb out" onclick="gmLogResult('SF')">SF<span class="rb-sub">Sac Fly</span></button>
+        <button class="rb reach" onclick="gmLogResult('FC')">FC<span class="rb-sub">FC</span></button>
+        <button class="rb reach wide" onclick="gmLogResult('ROE')">ROE<span class="rb-sub">Reached/Error</span></button>
+        <button class="rb reach wide" onclick="gmLogResult('CS')">CS<span class="rb-sub">Caught Stealing</span></button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <button class="btn btn-ghost" style="flex:1" onclick="gmNextBatter()">Skip ▶</button>
+        ${ag.atBats.length ? `<button class="btn btn-ghost" style="flex:1" onclick="gmUndoAB(${ag.atBats.length-1})">↩ Undo</button>` : ''}
+      </div>`;
+  }
+
+  // Recent plays this game
+  if(ag.atBats.length){
+    const recent = [...ag.atBats].reverse().slice(0,8);
+    html += `<div class="card" style="margin-top:12px"><div class="card-title">This Game</div><div class="plog">`;
+    recent.forEach(ab=>{
+      const p = gmDb.roster.find(p=>p.id===ab.playerId);
+      const isHit = ['1B','2B','3B','HR'].includes(ab.result);
+      const isWalk = ['BB','HBP'].includes(ab.result);
+      const cls = isHit?'bh':isWalk?'bw':'bo';
+      const extras = [];
+      if(ab.rbis>0) extras.push(ab.rbis+' RBI');
+      if(ab.scored) extras.push('Scored');
+      html += `<div class="pentry">
+        <div class="pbadge ${cls}">${ab.result}</div>
+        <div class="flex1">
+          <div class="pmain">${p?p.name:'?'}${extras.length?' · <span class="psub-inline">'+extras.join(' · ')+'</span>':''}</div>
+          <div class="psub">Inn ${ab.inning}</div>
+        </div>
+      </div>`;
+    });
+    html += `</div></div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+function gmLogResult(result){
+  if(!gmDb.activeGameId) return;
+  gmPendingResult = result;
+  gmPendingRBIs = 0;
+  gmPendingScored = false;
+  renderGMBook(document.getElementById('gmContent'));
+}
+
+function gmSelectRBI(n){
+  gmPendingRBIs = n;
+  // Re-render to update button state
+  document.querySelectorAll('#gmContent .rbib').forEach((b,i)=>{
+    b.classList.toggle('sel', i===n);
+  });
+}
+
+function gmSelScored(val, btn){
+  gmPendingScored = val;
+  btn.closest('div').querySelectorAll('.dpill').forEach(b=>b.className='dpill');
+  btn.classList.add(val ? 'sel-scored-yes' : 'sel-scored-no');
+}
+
+function gmCancelResult(){
+  gmPendingResult = null;
+  gmPendingRBIs = 0;
+  gmPendingScored = false;
+  renderGMBook(document.getElementById('gmContent'));
+}
+
+function gmConfirmPA(){
+  const ag = gmDb.activeGameId ? gmDb.games.find(g=>g.id===gmDb.activeGameId) : null;
+  if(!ag || gmPendingResult===null) return;
+  const batter = gmCurrentBatter(ag);
+  const batterId = batter ? batter.id : null;
+  const isOut = ['K','GO','FO','LO','SF','CS'].includes(gmPendingResult);
+
+  // Build AB record
+  const ab = {
+    id: uid(),
+    playerId: batterId,
+    inning: ag.currentInning,
+    result: gmPendingResult,
+    rbis: gmPendingRBIs,
+    scored: gmPendingScored,
+    sb: false
+  };
+  ag.atBats.push(ab);
+
+  // Update bases
+  updateBases(ag, batterId, gmPendingResult);
+
+  // Handle outs
+  if(isOut && gmPendingResult !== 'FC' && gmPendingResult !== 'ROE'){
+    ag.outs++;
+    if(ag.outs >= 3){
+      gmPendingResult = null;
+      gmPendingRBIs = 0;
+      gmPendingScored = false;
+      saveGM();
+      openGMInningEnd();
+      return;
+    }
+  }
+
+  // Advance batter
+  gmNextBatter(ag);
+
+  gmPendingResult = null;
+  gmPendingRBIs = 0;
+  gmPendingScored = false;
+  saveGM();
+  renderGMBook(document.getElementById('gmContent'));
+  toast(gmResultLabel(ab.result)+(ab.rbis>0?' · '+ab.rbis+' RBI':''));
+}
+
+function gmNextBatter(ag){
+  const game = ag || (gmDb.activeGameId ? gmDb.games.find(g=>g.id===gmDb.activeGameId) : null);
+  if(!game || !game.lineup.length) return;
+  game.nextBatterIdx = (game.nextBatterIdx + 1) % game.lineup.length;
+  if(!ag){
+    saveGM();
+    renderGMBook(document.getElementById('gmContent'));
+  }
+}
+
+function gmUndoAB(idx){
+  const ag = gmDb.activeGameId ? gmDb.games.find(g=>g.id===gmDb.activeGameId) : null;
+  if(!ag || idx < 0 || idx >= ag.atBats.length) return;
+  const ab = ag.atBats[idx];
+  ag.atBats.splice(idx,1);
+  // Rewind batter index
+  if(ag.lineup.length){
+    ag.nextBatterIdx = (ag.nextBatterIdx - 1 + ag.lineup.length) % ag.lineup.length;
+  }
+  // Rewind outs if it was an out
+  if(['K','GO','FO','LO','SF','CS'].includes(ab.result)){
+    ag.outs = Math.max(0, ag.outs - 1);
+  }
+  saveGM();
+  toast('Undone: '+gmResultLabel(ab.result));
+  renderGMBook(document.getElementById('gmContent'));
+}
+
+function updateBases(game, batterId, result){
+  const b = game.bases;
+  if(result==='1B'){
+    // third→score, second→third, first→second, batter→first
+    if(b.third){ game.bases.third = null; }
+    if(b.second){ game.bases.third = b.second; game.bases.second = null; }
+    if(b.first){ game.bases.second = b.first; game.bases.first = null; }
+    game.bases.first = batterId;
+  } else if(result==='2B'){
+    if(b.third){ game.bases.third = null; }
+    if(b.second){ game.bases.third = null; /* scores */ }
+    if(b.first){ game.bases.third = b.first; game.bases.first = null; }
+    game.bases.second = batterId;
+  } else if(result==='3B'){
+    game.bases = {first:null, second:null, third:batterId};
+  } else if(result==='HR'){
+    game.bases = {first:null, second:null, third:null};
+  } else if(result==='BB'||result==='HBP'||result==='FC'||result==='ROE'){
+    // Force advance: only push if first is occupied
+    if(b.first && b.second && b.third){ game.bases.third = null; }
+    if(b.first && b.second){ game.bases.third = b.second; }
+    if(b.first){ game.bases.second = b.first; }
+    game.bases.first = batterId;
+  } else if(result==='SF'){
+    // Runner on third scores, out recorded
+    game.bases.third = null;
+  }
+  // K/GO/FO/LO/CS: no base change
+}
+
+function openGMInningEnd(){
+  const ag = gmDb.activeGameId ? gmDb.games.find(g=>g.id===gmDb.activeGameId) : null;
+  if(!ag) return;
+  gmInnPendingRuns = 0;
+  document.getElementById('gm-inning-modal-title').textContent = `End of Inning ${ag.currentInning}`;
+  document.getElementById('gm-inn-runs').textContent = '0';
+  openModal('modal-gm-inning');
+}
+
+function gmInnAdj(delta){
+  gmInnPendingRuns = Math.max(0, gmInnPendingRuns + delta);
+  document.getElementById('gm-inn-runs').textContent = gmInnPendingRuns;
+}
+
+function gmConfirmInningEnd(){
+  const ag = gmDb.activeGameId ? gmDb.games.find(g=>g.id===gmDb.activeGameId) : null;
+  if(!ag) return;
+  // Record opponent runs for this inning
+  if(!ag.innings) ag.innings = [];
+  // Find or create inning record
+  while(ag.innings.length < ag.currentInning) ag.innings.push({us:0, them:0});
+  ag.innings[ag.currentInning-1].them = gmInnPendingRuns;
+  // Compute our runs from atBats this inning
+  const ourRuns = ag.atBats.filter(ab=>ab.inning===ag.currentInning&&ab.scored).length
+                + ag.atBats.filter(ab=>ab.inning===ag.currentInning&&(ab.rbis||0)>0)
+                            .reduce((s,ab)=>s+(ab.rbis||0),0);
+  // Actually track our runs via scored flags + rbis per inning
+  const innAtBats = ag.atBats.filter(ab=>ab.inning===ag.currentInning);
+  let usRuns = innAtBats.filter(ab=>ab.scored).length;
+  innAtBats.forEach(ab=>{ usRuns += (ab.rbis||0); });
+  ag.innings[ag.currentInning-1].us = usRuns;
+  // Advance inning
+  ag.currentInning++;
+  ag.outs = 0;
+  ag.bases = {first:null, second:null, third:null};
+  closeModal('modal-gm-inning');
+  saveGM();
+  toast(`Inning ${ag.currentInning} — let's go!`);
+  renderGMBook(document.getElementById('gmContent'));
+}
+
+function gmCurrentBatter(game){
+  if(!game.lineup || !game.lineup.length) return null;
+  const idx = game.nextBatterIdx % game.lineup.length;
+  const pid = game.lineup[idx];
+  return gmDb.roster.find(p=>p.id===pid) || null;
+}
+
+function gmResultLabel(r){
+  return {
+    '1B':'Single','2B':'Double','3B':'Triple','HR':'Home Run',
+    'BB':'Walk','HBP':'Hit by Pitch','K':'Strikeout','GO':'Ground Out',
+    'FO':'Fly Out','LO':'Line Out','SF':'Sac Fly','FC':"Fielder's Choice",
+    'ROE':'Reached on Error','CS':'Caught Stealing'
+  }[r]||r;
+}
+
+function gmGameStats(game){
+  let h=0,ab=0,rbi=0,r=0,bb=0,k=0,hr=0;
+  (game.atBats||[]).forEach(ab_=>{
+    const res=ab_.result;
+    if(!['BB','HBP','SF'].includes(res)) ab++;
+    if(['1B','2B','3B','HR'].includes(res)) h++;
+    if(res==='HR') hr++;
+    if(res==='BB') bb++;
+    if(res==='K') k++;
+    rbi+=(ab_.rbis||0);
+    if(ab_.scored) r++;
+  });
+  return {h,ab,rbi,r,bb,k,hr};
+}
+
+function gmScoreTotals(game){
+  const innings = game.innings || [];
+  return {
+    us:   innings.reduce((s,i)=>s+(i.us||0),0),
+    them: innings.reduce((s,i)=>s+(i.them||0),0)
+  };
+}
+
+function gmTeamStats(games){
+  let h=0,ab=0,rbi=0,r=0,bb=0,hr=0;
+  games.forEach(g=>{
+    const gs=gmGameStats(g);
+    h+=gs.h; ab+=gs.ab; rbi+=gs.rbi; r+=gs.r; bb+=gs.bb; hr+=gs.hr;
+  });
+  return {avg:avgFmt(h,ab), r, rbi, hr, h, ab, bb};
+}
+
+function gmPlayerSeasonStats(playerId){
+  let h=0,ab=0,rbi=0,r=0,bb=0,hr=0,pa=0;
+  gmDb.games.forEach(g=>{
+    (g.atBats||[]).filter(ab=>ab.playerId===playerId).forEach(ab_=>{
+      const res=ab_.result;
+      pa++;
+      if(!['BB','HBP','SF'].includes(res)) ab++;
+      if(['1B','2B','3B','HR'].includes(res)) h++;
+      if(res==='HR') hr++;
+      if(res==='BB') bb++;
+      rbi+=(ab_.rbis||0);
+      if(ab_.scored) r++;
+    });
+  });
+  const obp = (ab+bb)===0?'.000':('.'+String(Math.round((h+bb)/(ab+bb)*1000)).padStart(3,'0'));
+  return {avg:avgFmt(h,ab), h, ab, rbi, r, bb, hr, pa, obp};
+}
+
+// ── GM Roster ────────────────────────────────────────────────────────────────
+function renderGMRoster(el){
+  if(!gmDb.roster.length){
+    el.innerHTML = `
+      <div class="empty">
+        <div class="empty-ico">👥</div>
+        <h3>No Players Yet</h3>
+        <p>Add your Goldies roster to track individual stats.</p>
+        <button class="btn btn-g btn-lg" onclick="openGMAddPlayer()">Add First Player</button>
+      </div>`;
+    return;
+  }
+  const sorted = [...gmDb.roster].sort((a,b)=>(a.number||999)-(b.number||999));
+  let html = `<div class="card"><div class="card-title">Roster — ${sorted.length} players</div>`;
+  sorted.forEach(p=>{
+    const st = gmPlayerSeasonStats(p.id);
+    html += `
+      <div class="gm-pitem">
+        <div class="gm-pnum">${p.number||'—'}</div>
+        <div class="gm-pinfo">
+          <div class="gm-pname">${p.name}</div>
+          <div class="gm-ppos">${p.position||'—'} · ${st.avg} AVG · ${st.hr} HR · ${st.rbi} RBI</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" onclick="openGMEditPlayer('${p.id}')">Edit</button>
+          <button class="btn btn-red btn-sm" onclick="deleteGMPlayer('${p.id}')">Del</button>
+        </div>
+      </div>`;
+  });
+  html += `</div>`;
+  el.innerHTML = html;
+}
+
+function openGMAddPlayer(){
+  document.getElementById('modal-gm-player-title').textContent = 'Add Player';
+  document.getElementById('gm-input-name').value = '';
+  document.getElementById('gm-input-number').value = '';
+  document.getElementById('gm-input-player-id').value = '';
+  buildPosGrid('pos-grid-gm-player','');
+  openModal('modal-gm-player');
+  setTimeout(()=>document.getElementById('gm-input-name').focus(),200);
+}
+
+function openGMEditPlayer(id){
+  const p = gmDb.roster.find(p=>p.id===id);
+  if(!p) return;
+  document.getElementById('modal-gm-player-title').textContent = 'Edit Player';
+  document.getElementById('gm-input-name').value = p.name;
+  document.getElementById('gm-input-number').value = p.number||'';
+  document.getElementById('gm-input-player-id').value = p.id;
+  buildPosGrid('pos-grid-gm-player', p.position||'');
+  openModal('modal-gm-player');
+}
+
+function saveGMPlayer(){
+  const name = document.getElementById('gm-input-name').value.trim();
+  const number = parseInt(document.getElementById('gm-input-number').value)||null;
+  const pos = getSelectedPos('pos-grid-gm-player');
+  const id = document.getElementById('gm-input-player-id').value;
+  if(!name){ toast('Enter a name'); return; }
+  if(id){
+    const p = gmDb.roster.find(p=>p.id===id);
+    p.name = name; p.number = number; p.position = pos;
+  } else {
+    gmDb.roster.push({id:uid(), name, number, position:pos, active:true});
+  }
+  saveGM();
+  closeModal('modal-gm-player');
+  renderGMRoster(document.getElementById('gmContent'));
+  toast(id?'Player updated':'Player added!');
+}
+
+function deleteGMPlayer(id){
+  if(!confirm('Remove player from roster?')) return;
+  gmDb.roster = gmDb.roster.filter(p=>p.id!==id);
+  saveGM();
+  renderGMRoster(document.getElementById('gmContent'));
+  toast('Player removed');
+}
+
+// ── GM Stats ─────────────────────────────────────────────────────────────────
+function renderGMStats(el){
+  const games = gmDb.games;
+  if(!games.length || !gmDb.roster.length){
+    el.innerHTML = `<div class="empty"><div class="empty-ico">📊</div><h3>No data yet</h3><p>Add players and play some games to see team stats.</p></div>`;
+    return;
+  }
+  const ts = gmTeamStats(games);
+  // OBP
+  const allABs = games.flatMap(g=>g.atBats||[]);
+  const tH = allABs.filter(a=>['1B','2B','3B','HR'].includes(a.result)).length;
+  const tBB = allABs.filter(a=>a.result==='BB').length;
+  const tHBP = allABs.filter(a=>a.result==='HBP').length;
+  const tSF = allABs.filter(a=>a.result==='SF').length;
+  const tAB = allABs.filter(a=>!['BB','HBP','SF'].includes(a.result)).length;
+  const tD = allABs.filter(a=>a.result==='2B').length;
+  const tT = allABs.filter(a=>a.result==='3B').length;
+  const tHR2 = allABs.filter(a=>a.result==='HR').length;
+  const obpDen = tAB+tBB+tHBP+tSF;
+  const obpVal = obpDen===0?'.000':('.'+String(Math.round((tH+tBB+tHBP)/obpDen*1000)).padStart(3,'0'));
+  const slgVal = tAB===0?'.000':('.'+String(Math.round((tH-tD-tT-tHR2+2*tD+3*tT+4*tHR2)/tAB*1000)).padStart(3,'0'));
+  const opsOBP = obpDen===0?0:(tH+tBB+tHBP)/obpDen;
+  const opsSLG = tAB===0?0:(tH-tD-tT-tHR2+2*tD+3*tT+4*tHR2)/tAB;
+  const opsVal = '.'+String(Math.round((opsOBP+opsSLG)*1000)).padStart(3,'0');
+
+  let html = `
+    <div class="card">
+      <div class="card-title">Team Batting</div>
+      <div class="sgrid">
+        <div class="si"><div class="sv">${ts.avg}</div><div class="sl">AVG</div></div>
+        <div class="si"><div class="sv sm">${obpVal}</div><div class="sl">OBP</div></div>
+        <div class="si"><div class="sv sm">${slgVal}</div><div class="sl">SLG</div></div>
+        <div class="si"><div class="sv sm">${opsVal}</div><div class="sl">OPS</div></div>
+      </div>
+      <div class="divider"></div>
+      <div class="sgrid">
+        <div class="si"><div class="sv sm">${games.length}</div><div class="sl">G</div></div>
+        <div class="si"><div class="sv sm">${ts.r}</div><div class="sl">R</div></div>
+        <div class="si"><div class="sv sm">${ts.h}</div><div class="sl">H</div></div>
+        <div class="si"><div class="sv sm">${ts.hr}</div><div class="sl">HR</div></div>
+      </div>
+    </div>`;
+
+  // Player stats table
+  const rosterWithStats = gmDb.roster.map(p=>({p, st:gmPlayerSeasonStats(p.id)}))
+    .filter(({st})=>st.pa>0)
+    .sort((a,b)=>b.st.ab-a.st.ab);
+
+  if(rosterWithStats.length){
+    html += `<div class="card"><div class="card-title">Player Stats</div>
+      <div style="overflow-x:auto">
+      <table class="stbl">
+        <thead><tr><th>Player</th><th>PA</th><th>AB</th><th>H</th><th>HR</th><th>RBI</th><th>R</th><th class="hi">AVG</th><th>OBP</th></tr></thead>
+        <tbody>`;
+    rosterWithStats.forEach(({p,st})=>{
+      html += `<tr>
+        <td>${p.name}</td>
+        <td>${st.pa}</td><td>${st.ab}</td><td>${st.h}</td><td>${st.hr}</td>
+        <td>${st.rbi}</td><td>${st.r}</td>
+        <td class="hi">${st.avg}</td><td>${st.obp}</td>
+      </tr>`;
+    });
+    html += `</tbody></table></div></div>`;
+
+    // Leaderboards
+    const obpLeaders = [...rosterWithStats].filter(({st})=>st.ab>=5).sort((a,b)=>parseFloat(b.st.obp)-parseFloat(a.st.obp)).slice(0,5);
+    const hrLeaders  = [...rosterWithStats].sort((a,b)=>b.st.hr-a.st.hr).filter(({st})=>st.hr>0).slice(0,5);
+    const rbiLeaders = [...rosterWithStats].sort((a,b)=>b.st.rbi-a.st.rbi).filter(({st})=>st.rbi>0).slice(0,5);
+
+    if(obpLeaders.length){
+      html += `<div class="card"><div class="card-title">OBP Leaders</div>`;
+      const maxOBP = parseFloat(obpLeaders[0].st.obp)||1;
+      obpLeaders.forEach(({p,st})=>{
+        const pct = maxOBP>0?Math.round(parseFloat(st.obp)/maxOBP*100):0;
+        html += `<div class="gm-stat-bar">
+          <div class="gm-stat-bar-name">${p.name}</div>
+          <div class="prowb" style="flex:1"><div class="prowbf" style="width:${pct}%;background:var(--blue)"></div></div>
+          <div class="gm-stat-bar-val">${st.obp}</div>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+    if(hrLeaders.length){
+      html += `<div class="card"><div class="card-title">HR Leaders</div>`;
+      const maxHR = hrLeaders[0].st.hr||1;
+      hrLeaders.forEach(({p,st})=>{
+        const pct = Math.round(st.hr/maxHR*100);
+        html += `<div class="gm-stat-bar">
+          <div class="gm-stat-bar-name">${p.name}</div>
+          <div class="prowb" style="flex:1"><div class="prowbf" style="width:${pct}%;background:var(--g)"></div></div>
+          <div class="gm-stat-bar-val">${st.hr} HR</div>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+    if(rbiLeaders.length){
+      html += `<div class="card"><div class="card-title">RBI Leaders</div>`;
+      const maxRBI2 = rbiLeaders[0].st.rbi||1;
+      rbiLeaders.forEach(({p,st})=>{
+        const pct = Math.round(st.rbi/maxRBI2*100);
+        html += `<div class="gm-stat-bar">
+          <div class="gm-stat-bar-name">${p.name}</div>
+          <div class="prowb" style="flex:1"><div class="prowbf" style="width:${pct}%;background:var(--am)"></div></div>
+          <div class="gm-stat-bar-val">${st.rbi} RBI</div>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+  }
+
+  // Runs by inning breakdown
+  const maxInn = Math.max(...games.map(g=>(g.innings||[]).length), 0);
+  if(maxInn > 0){
+    const innRuns = [];
+    for(let i=0;i<maxInn;i++){
+      let us=0, them=0;
+      games.forEach(g=>{
+        if(g.innings && g.innings[i]){
+          us += (g.innings[i].us||0);
+          them += (g.innings[i].them||0);
+        }
+      });
+      innRuns.push({inn:i+1, us, them});
+    }
+    const maxR = Math.max(...innRuns.flatMap(i=>[i.us,i.them]), 1);
+    html += `<div class="card"><div class="card-title">Runs by Inning</div>
+      <div style="display:flex;gap:6px;align-items:flex-end;height:80px;margin-bottom:6px">`;
+    innRuns.forEach(({inn,us,them})=>{
+      const usPct = Math.round(us/maxR*100);
+      const themPct = Math.round(them/maxR*100);
+      html += `<div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end">
+          <div style="background:var(--g);border-radius:3px 3px 0 0;height:${usPct}%;min-height:${us>0?'4px':'0'}"></div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end">
+          <div style="background:var(--red);border-radius:3px 3px 0 0;opacity:.6;height:${themPct}%;min-height:${them>0?'4px':'0'}"></div>
+        </div>
+      </div>`;
+    });
+    html += `</div>
+      <div style="display:flex;gap:6px">`;
+    innRuns.forEach(({inn})=>{
+      html += `<div style="flex:1;text-align:center;font-size:9px;color:var(--text2);font-weight:700">${inn}</div>`;
+    });
+    html += `</div>
+      <div style="display:flex;gap:14px;margin-top:8px;font-size:11px;font-weight:700">
+        <span style="color:var(--g)">■ Goldies</span>
+        <span style="color:var(--red);opacity:.7">■ Opp</span>
+      </div>
+    </div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+// ── GM Start Game ─────────────────────────────────────────────────────────────
+function openGMStartGame(){
+  gmSelectedLineup = [];
+  document.getElementById('gm-input-opponent').value = '';
+  document.getElementById('gm-input-location').value = '';
+  buildGMLineupSelector();
+  updateGMCalendarSuggestions();
+  openModal('modal-gm-start');
+  setTimeout(()=>document.getElementById('gm-input-opponent').focus(),200);
+}
+
+function buildGMLineupSelector(){
+  const el = document.getElementById('gm-lineup-selector');
+  if(!el) return;
+  const sorted = [...gmDb.roster].filter(p=>p.active!==false).sort((a,b)=>(a.number||999)-(b.number||999));
+  if(!sorted.length){
+    el.innerHTML = `<div style="color:var(--text2);font-size:13px;padding:8px 0">Add players to roster first to build a lineup.</div>`;
+    return;
+  }
+  let html = '';
+  // Show selected lineup order at top
+  if(gmSelectedLineup.length){
+    html += `<div style="margin-bottom:8px;font-size:11px;font-weight:700;color:var(--g)">Lineup (${gmSelectedLineup.length}): `;
+    html += gmSelectedLineup.map((id,i)=>{
+      const p = gmDb.roster.find(r=>r.id===id);
+      return `${i+1}. ${p?p.name.split(' ')[0]:'?'}`;
+    }).join(' → ');
+    html += `</div>`;
+  }
+  sorted.forEach(p=>{
+    const pos = gmSelectedLineup.indexOf(p.id)+1;
+    const inLineup = pos > 0;
+    html += `<div class="lineup-slot" onclick="toggleGMLineupPlayer('${p.id}')">
+      <div class="lineup-spot${inLineup?' active':''}">${inLineup?pos:'+'}</div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:700;color:var(--text)">${p.name}</div>
+        <div style="font-size:11px;color:var(--text2)">#${p.number||'—'} · ${p.position||'—'}</div>
+      </div>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+function toggleGMLineupPlayer(id){
+  const idx = gmSelectedLineup.indexOf(id);
+  if(idx >= 0){
+    gmSelectedLineup.splice(idx,1);
+  } else {
+    gmSelectedLineup.push(id);
+  }
+  buildGMLineupSelector();
+}
+
+function gmStartGame(){
+  const opponent = (document.getElementById('gm-input-opponent').value||'').trim();
+  if(!opponent){ toast('Enter opponent name'); return; }
+  if(gmDb.activeGameId){
+    if(!confirm('End current game and start a new one?')) return;
+    const old = gmDb.games.find(g=>g.id===gmDb.activeGameId);
+    if(old) old.status = 'final';
+    gmDb.activeGameId = null;
+  }
+  const location = (document.getElementById('gm-input-location').value||'').trim();
+  const id = uid();
+  gmDb.games.push({
+    id, date:Date.now(), opponent, location, status:'active',
+    lineup:[...gmSelectedLineup],
+    atBats:[], innings:[], outs:0,
+    currentInning:1,
+    bases:{first:null,second:null,third:null},
+    nextBatterIdx:0
+  });
+  gmDb.activeGameId = id;
+  saveGM();
+  closeModal('modal-gm-start');
+  gmCurrentTab = 'book';
+  document.querySelectorAll('#gm-seg .segb').forEach((b,i)=>{
+    b.classList.toggle('act', i===1);
+  });
+  renderHeader('gm');
+  renderGM('book');
+  toast('Game started!');
+}
+
+function gmEndGame(){
+  if(!confirm('End the current game?')) return;
+  const ag = gmDb.games.find(g=>g.id===gmDb.activeGameId);
+  if(ag) ag.status = 'final';
+  gmDb.activeGameId = null;
+  saveGM();
+  renderHeader('gm');
+  renderGMHome(document.getElementById('gmContent'));
+  toast('Game saved!');
+}
+
+function updateGMCalendarSuggestions(){
+  const wrap = document.getElementById('gm-start-upcoming-wrap');
+  if(!wrap) return;
+  // Find any team with 'goldie' in name
+  const goldieTeam = db.teams.find(t=>t.name.toLowerCase().includes('goldie'));
+  if(!goldieTeam || !goldieTeam.calendar) { wrap.innerHTML = ''; return; }
+  const upcoming = getUpcomingGames(goldieTeam.id);
+  if(!upcoming.length) { wrap.innerHTML = ''; return; }
+  let html = `<div style="margin-bottom:10px">`;
+  upcoming.slice(0,4).forEach(ev=>{
+    const d = new Date(ev.start);
+    const dateLbl = d.toDateString()===new Date().toDateString()?'TODAY':`${d.getMonth()+1}/${d.getDate()}`;
+    const opp = extractOpponent(ev.summary||'', goldieTeam.name);
+    html += `<div class="upcoming-game" onclick="document.getElementById('gm-input-opponent').value='${(opp||ev.summary||'').replace(/'/g,"\\'")}';document.getElementById('gm-input-location').value='${(ev.location||'').replace(/'/g,"\\'")}';toast('Filled in!')">
+      <div class="ug-date">${dateLbl}</div>
+      <div class="ug-info"><div class="ug-title">vs. ${opp||ev.summary}</div>${ev.location?`<div class="ug-loc">📍 ${ev.location}</div>`:''}</div>
+      <span style="color:var(--g);font-size:11px;font-weight:700">Use →</span>
+    </div>`;
+  });
+  html += `</div>`;
+  wrap.innerHTML = html;
+}
+
+function openGMGameDetail(id){
+  const game = gmDb.games.find(g=>g.id===id);
+  if(!game) return;
+  const totals = gmScoreTotals(game);
+  const usLead = totals.us >= totals.them;
+  let html = `
+    <div style="margin-bottom:16px">
+      <div style="font-size:19px;font-weight:800">Goldies vs. ${game.opponent||'Opponent'}</div>
+      <div style="font-size:13px;color:var(--muted)">${formatDateFull(game.date)}${game.location?' · '+game.location:''}</div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:16px;padding:14px;background:linear-gradient(135deg,#1B2040,#13162A);border:1px solid rgba(74,222,128,.15);border-radius:12px;margin-bottom:16px">
+      <div style="text-align:center;min-width:70px">
+        <div style="font-size:11px;font-weight:700;opacity:.4;margin-bottom:4px">Goldies</div>
+        <div style="font-size:32px;font-weight:900;color:${usLead?'var(--g)':'#fff'}">${totals.us}</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:10px;font-weight:700;color:rgba(74,222,128,.6);text-transform:uppercase">Final</div>
+        <div style="font-size:20px;font-weight:900;color:rgba(255,255,255,.15)">–</div>
+      </div>
+      <div style="text-align:center;min-width:70px">
+        <div style="font-size:11px;font-weight:700;opacity:.4;margin-bottom:4px">${game.opponent||'Opp'}</div>
+        <div style="font-size:32px;font-weight:900;color:${totals.them>totals.us?'var(--g)':'#fff'}">${totals.them}</div>
+      </div>
+    </div>`;
+  // Box score by inning
+  if(game.innings && game.innings.length){
+    let innH = game.innings.map((_,i)=>`<th>${i+1}</th>`).join('');
+    let usRow = game.innings.map(i=>`<td>${i.us}</td>`).join('');
+    let tRow = game.innings.map(i=>`<td>${i.them}</td>`).join('');
+    html += `<div style="overflow-x:auto;margin-bottom:16px"><table class="bbox-tbl">
+      <thead><tr><th>Team</th>${innH}<th>R</th></tr></thead>
+      <tbody>
+        <tr><td>Goldies</td>${usRow}<td class="bbox-r${usLead?' bbox-win':''}">${totals.us}</td></tr>
+        <tr><td>${game.opponent||'Opp'}</td>${tRow}<td class="bbox-r${totals.them>totals.us?' bbox-win':''}">${totals.them}</td></tr>
+      </tbody>
+    </table></div>`;
+  }
+  // Play log
+  if(game.atBats && game.atBats.length){
+    html += `<div class="card-title">Play Log</div><div class="plog">`;
+    game.atBats.forEach(ab=>{
+      const p = gmDb.roster.find(p=>p.id===ab.playerId);
+      const isHit=['1B','2B','3B','HR'].includes(ab.result);
+      const isWalk=['BB','HBP'].includes(ab.result);
+      const cls=isHit?'bh':isWalk?'bw':'bo';
+      const extras=[];
+      if(ab.rbis>0)extras.push(ab.rbis+' RBI');
+      if(ab.scored)extras.push('Scored');
+      html+=`<div class="pentry"><div class="pbadge ${cls}">${ab.result}</div>
+        <div><div class="pmain">${p?p.name:'?'}</div>${extras.length?`<div class="psub">${extras.join(' · ')}</div>`:''}</div></div>`;
+    });
+    html += `</div>`;
+  }
+  document.getElementById('game-detail-content').innerHTML = html;
+  openModal('modal-game');
 }
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
