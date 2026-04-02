@@ -360,6 +360,107 @@
     .gm-stat-bar{display:flex;align-items:center;gap:8px;margin-bottom:8px}
     .gm-stat-bar-name{font-size:13px;font-weight:700;color:var(--text);min-width:100px}
     .gm-stat-bar-val{font-size:12px;font-weight:800;color:var(--text2);min-width:40px;text-align:right}
+    /* ── Lineup Lab ────────────────────────────────────────── */
+    .lab-scores{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+    .lab-score-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 8px;text-align:center}
+    .lab-score-val{font-size:24px;font-weight:900;line-height:1;margin-bottom:2px}
+    .lab-score-lbl{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px}
+    .lab-score-bar{height:3px;border-radius:2px;margin-top:6px;background:rgba(255,255,255,.08);overflow:hidden}
+    .lab-score-fill{height:100%;border-radius:2px;transition:width .4s}
+    .player-pool-wrap{margin-bottom:14px}
+    .player-pool-lbl{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+    .player-pool{display:flex;gap:8px;overflow-x:auto;padding:2px 0 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .player-pool::-webkit-scrollbar{display:none}
+    .ppool-card{flex-shrink:0;width:96px;background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:10px 8px;cursor:pointer;text-align:center;transition:border-color .15s,background .15s,box-shadow .15s;-webkit-tap-highlight-color:transparent;position:relative}
+    .ppool-card:active{transform:scale(.95)}
+    .ppool-card.selected{border-color:var(--g)!important;background:rgba(74,222,128,.1)!important;box-shadow:0 0 16px rgba(74,222,128,.25)}
+    .ppool-card.is-assigned{opacity:.5}
+    .ppool-num{font-size:10px;font-weight:900;color:var(--am);margin-bottom:2px}
+    .ppool-name{font-size:12px;font-weight:800;color:var(--text);line-height:1.2;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .ppool-pos{font-size:10px;color:var(--text2);margin-bottom:4px}
+    .ppool-stat{font-size:14px;font-weight:900;color:var(--g);line-height:1}
+    .ppool-stat-lbl{font-size:9px;color:var(--text2);font-weight:600}
+    .ppool-tags{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;margin-top:4px;min-height:12px}
+    .ptag{font-size:8px;font-weight:700;padding:1px 5px;border-radius:20px}
+    .ptag-lead{background:rgba(74,222,128,.15);color:var(--g)}
+    .ptag-power{background:rgba(248,113,113,.15);color:var(--red)}
+    .ptag-speed{background:rgba(251,191,36,.15);color:var(--am)}
+    .ptag-anchor{background:rgba(167,139,250,.15);color:var(--pur)}
+    .ptag-utility{background:rgba(129,140,248,.15);color:var(--blue)}
+    .ptag-clutch{background:rgba(74,222,128,.15);color:var(--g)}
+    .ppool-edit-btn{position:absolute;top:4px;right:4px;background:rgba(255,255,255,.07);border:none;border-radius:5px;color:var(--text2);font-size:9px;font-weight:700;padding:2px 5px;cursor:pointer;-webkit-tap-highlight-color:transparent;line-height:1.4}
+    .lab-field-wrap{position:relative;width:100%;max-width:360px;margin:0 auto 16px}
+    .lab-field-inner{position:relative;background:linear-gradient(180deg,#0b2a0b 0%,#0f3310 45%,#163d16 100%);border:2px solid rgba(74,222,128,.18);border-radius:18px;overflow:hidden;padding-bottom:112%}
+    .lab-field-svg{position:absolute;inset:0;width:100%;height:100%}
+    .lab-fpos{position:absolute;transform:translate(-50%,-50%);cursor:pointer;-webkit-tap-highlight-color:transparent;z-index:3}
+    .lab-fpos-btn{width:56px;height:56px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:9px;font-weight:800;text-align:center;line-height:1.2;transition:all .15s;border:2.5px solid rgba(255,255,255,.12);background:rgba(0,0,0,.55);color:rgba(255,255,255,.3)}
+    .lab-fpos-btn:active{transform:scale(.9)}
+    .lab-fpos-btn.await{border-color:var(--am);background:rgba(251,191,36,.18);color:var(--am);box-shadow:0 0 12px rgba(251,191,36,.35)}
+    .lab-fpos-btn.filled{color:var(--text)}
+    .lab-fpos-btn.fit-great{border-color:rgba(74,222,128,.8);background:rgba(74,222,128,.2);box-shadow:0 0 8px rgba(74,222,128,.2)}
+    .lab-fpos-btn.fit-ok{border-color:rgba(251,191,36,.7);background:rgba(251,191,36,.15)}
+    .lab-fpos-btn.fit-bad{border-color:rgba(248,113,113,.7);background:rgba(248,113,113,.15)}
+    .lab-fpos-lbl{font-size:11px;font-weight:900;display:block}
+    .lab-fpos-name{font-size:8px;font-weight:700;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:52px;margin-top:1px;color:var(--text)}
+    .bo-slot{display:flex;align-items:center;gap:10px;padding:11px 12px;background:var(--surface);border:1.5px solid var(--border);border-radius:13px;margin-bottom:7px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s;position:relative}
+    .bo-slot:active{transform:scale(.98)}
+    .bo-slot.await{border-color:var(--am);background:rgba(251,191,36,.07);box-shadow:0 0 10px rgba(251,191,36,.15)}
+    .bo-slot.filled{border-color:rgba(74,222,128,.3);background:rgba(74,222,128,.04)}
+    .bo-num{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;flex-shrink:0;background:rgba(255,255,255,.06);color:var(--muted);border:1.5px solid var(--border2)}
+    .bo-num.filled{background:var(--g);color:#0A0D14;border-color:var(--g)}
+    .bo-role{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;line-height:1}
+    .bo-pname{font-size:14px;font-weight:800;color:var(--text);line-height:1.2}
+    .bo-pstats{font-size:11px;color:var(--text2);margin-top:1px}
+    .bo-fit{font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px;flex-shrink:0;margin-left:auto}
+    .bo-fit-great{background:rgba(74,222,128,.15);color:var(--g)}
+    .bo-fit-ok{background:rgba(251,191,36,.15);color:var(--am)}
+    .bo-fit-bad{background:rgba(248,113,113,.15);color:var(--red)}
+    .ins-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px}
+    .ins-hd{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+    .ins-ico{font-size:18px;line-height:1}
+    .ins-title{font-size:13px;font-weight:800;color:var(--text)}
+    .ins-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--text2);line-height:1.4}
+    .ins-item:last-child{border-bottom:none}
+    .ins-pill{font-size:11px;font-weight:800;padding:3px 9px;border-radius:20px;flex-shrink:0}
+    .ins-g{background:rgba(74,222,128,.13);color:var(--g)}
+    .ins-am{background:rgba(251,191,36,.13);color:var(--am)}
+    .ins-red{background:rgba(248,113,113,.13);color:var(--red)}
+    .ins-blue{background:rgba(129,140,248,.13);color:var(--blue)}
+    .rating-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+    .rating-row:last-child{border-bottom:none}
+    .rating-lbl{font-size:12px;font-weight:700;color:var(--text);min-width:84px;flex-shrink:0}
+    .rating-slider{flex:1;height:4px;-webkit-appearance:none;appearance:none;background:var(--border2);border-radius:2px;outline:none;cursor:pointer}
+    .rating-slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--g);cursor:pointer;box-shadow:0 2px 8px rgba(74,222,128,.4)}
+    .rating-val{font-size:17px;font-weight:900;color:var(--g);min-width:28px;text-align:right}
+    .tag-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+    .tag-pill{padding:7px 13px;border:1.5px solid var(--border2);border-radius:20px;background:#13151F;font-size:12px;font-weight:700;color:var(--text2);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s}
+    .tag-pill.sel{border-color:var(--g);background:var(--gl);color:var(--g)}
+    .ver-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:8px}
+    .ver-card.active-ver{border-color:rgba(74,222,128,.4);background:rgba(74,222,128,.05)}
+    .ver-name{font-size:15px;font-weight:800;color:var(--text)}
+    .ver-meta{font-size:12px;color:var(--text2);margin-top:2px}
+    .ver-scores{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+    .ver-score-badge{font-size:11px;font-weight:800;padding:3px 9px;border-radius:20px;background:rgba(255,255,255,.07);color:var(--text2)}
+    .chat-thread{display:flex;flex-direction:column;gap:10px}
+    .chat-msg{padding:10px 14px;border-radius:14px;max-width:85%;font-size:14px;line-height:1.5;word-break:break-word}
+    .chat-msg.me{background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.2);align-self:flex-end;border-bottom-right-radius:4px;color:var(--text)}
+    .chat-msg.bro{background:rgba(129,140,248,.12);border:1px solid rgba(129,140,248,.2);align-self:flex-start;border-bottom-left-radius:4px;color:var(--text)}
+    .chat-author{font-size:10px;font-weight:800;margin-bottom:3px}
+    .chat-author.me{color:var(--g);text-align:right}
+    .chat-author.bro{color:var(--blue)}
+    .chat-ts{font-size:10px;color:var(--muted);margin-top:3px}
+    .strat-subtab{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .strat-subtab::-webkit-scrollbar{display:none}
+    .strat-stb{flex-shrink:0;padding:9px 14px;border:1.5px solid var(--border2);border-radius:10px;background:#13151F;font-size:12px;font-weight:700;color:var(--text2);cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent;transition:all .15s}
+    .strat-stb.act{border-color:var(--g);background:var(--gl);color:var(--g)}
+    .strat-who{display:flex;gap:6px;margin-bottom:10px}
+    .strat-who-btn{flex:1;padding:10px;border:1.5px solid var(--border2);border-radius:10px;background:#13151F;font-size:13px;font-weight:700;color:var(--text2);cursor:pointer;text-align:center;-webkit-tap-highlight-color:transparent}
+    .strat-who-btn.sel-me{border-color:var(--g);background:var(--gl);color:var(--g)}
+    .strat-who-btn.sel-bro{border-color:var(--blue);background:rgba(129,140,248,.12);color:var(--blue)}
+    .strat-chat-input{display:flex;gap:8px;margin-top:12px;align-items:flex-end}
+    .lineup-plan-slot{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:13px;margin-bottom:6px}
+    .lineup-plan-num{width:28px;height:28px;border-radius:50%;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.25);color:var(--g);font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .lineup-plan-empty{border:1.5px dashed var(--border2)!important;background:transparent!important;color:var(--muted)!important}
   </style>
 </head>
 <body>
@@ -388,6 +489,7 @@
       <button class="segb act" onclick="statsTab('overall')">Overall</button>
       <button class="segb" onclick="statsTab('batting')">Batting</button>
       <button class="segb" onclick="statsTab('fielding')">Fielding</button>
+      <button class="segb" onclick="statsTab('notes')">Notes</button>
     </div>
     <div id="statsContent"></div>
   </div>
@@ -399,15 +501,61 @@
 
   <!-- GM MODE -->
   <div id="scr-gm" class="scr">
-    <div class="seg" id="gm-seg">
-      <button class="segb act" onclick="gmTab('home')">Home</button>
-      <button class="segb" onclick="gmTab('book')">Scorebook</button>
-      <button class="segb" onclick="gmTab('roster')">Roster</button>
-      <button class="segb" onclick="gmTab('stats')">Stats</button>
+    <div class="seg" id="gm-seg" style="overflow-x:auto;flex-wrap:nowrap">
+      <button class="segb act" onclick="gmTab('home')" style="white-space:nowrap">Home</button>
+      <button class="segb" onclick="gmTab('book')" style="white-space:nowrap">Scorebook</button>
+      <button class="segb" onclick="gmTab('roster')" style="white-space:nowrap">Roster</button>
+      <button class="segb" onclick="gmTab('stats')" style="white-space:nowrap">Stats</button>
+      <button class="segb" onclick="gmTab('strategy')" style="white-space:nowrap">Strategy</button>
     </div>
     <div id="gmContent"></div>
   </div>
 </main>
+
+<!-- MODAL: Player Ratings & Tags (GM Mode) -->
+<div id="modal-gm-ratings" class="mover hide" onclick="closeModalOnBg(event,'modal-gm-ratings')">
+  <div class="modal" style="max-height:92vh">
+    <button class="mclose" onclick="closeModal('modal-gm-ratings')">✕</button>
+    <h2 id="gm-ratings-title">Player Ratings</h2>
+    <input type="hidden" id="gm-ratings-pid">
+    <div class="fgrp" style="margin-bottom:10px">
+      <label class="flbl">Scouting Notes</label>
+      <textarea class="finput" id="gm-ratings-note" rows="2" maxlength="200" placeholder="e.g. Best bat on the team, struggles vs. pull-side fielders…" style="resize:none;font-size:14px;padding:10px 12px"></textarea>
+    </div>
+    <div style="margin-bottom:14px">
+      <div class="flbl" style="margin-bottom:8px">Tags</div>
+      <div class="tag-grid" id="gm-tags-grid">
+        <button class="tag-pill" data-tag="leadoff" onclick="toggleGMTag(this,'leadoff')">⚡ Leadoff</button>
+        <button class="tag-pill" data-tag="power" onclick="toggleGMTag(this,'power')">💪 Power</button>
+        <button class="tag-pill" data-tag="speed" onclick="toggleGMTag(this,'speed')">🏃 Speed</button>
+        <button class="tag-pill" data-tag="anchor" onclick="toggleGMTag(this,'anchor')">⚓ Anchor</button>
+        <button class="tag-pill" data-tag="utility" onclick="toggleGMTag(this,'utility')">🔧 Utility</button>
+        <button class="tag-pill" data-tag="clutch" onclick="toggleGMTag(this,'clutch')">🎯 Clutch</button>
+        <button class="tag-pill" data-tag="veteran" onclick="toggleGMTag(this,'veteran')">🏆 Veteran</button>
+        <button class="tag-pill" data-tag="hot" onclick="toggleGMTag(this,'hot')">🔥 Hot</button>
+        <button class="tag-pill" data-tag="cold" onclick="toggleGMTag(this,'cold')">❄️ Cold</button>
+      </div>
+    </div>
+    <div class="flbl" style="margin-bottom:8px">Ratings (1–10)</div>
+    <div id="gm-ratings-sliders">
+      <!-- filled by JS -->
+    </div>
+    <button class="btn btn-g btn-full btn-lg mt12" onclick="saveGMRatings()">Save Ratings</button>
+  </div>
+</div>
+
+<!-- MODAL: Save Lineup Version -->
+<div id="modal-gm-version" class="mover hide" onclick="closeModalOnBg(event,'modal-gm-version')">
+  <div class="modal">
+    <button class="mclose" onclick="closeModal('modal-gm-version')">✕</button>
+    <h2>Save Lineup Version</h2>
+    <div class="fgrp">
+      <label class="flbl">Version Name</label>
+      <input class="finput" id="gm-version-name-input" type="text" placeholder="e.g. vs Blue Boys G1, Best Lineup, Rain Day…" maxlength="40">
+    </div>
+    <button class="btn btn-g btn-full btn-lg mt12" onclick="gmSaveVersion()">Save Version</button>
+  </div>
+</div>
 
 <!-- Bottom Nav -->
 <nav class="bnav">
@@ -538,6 +686,18 @@
         <button class="dpill" onclick="selDetail('pitch','good',this)"><span class="dico">✓</span>Good Pitch</button>
         <button class="dpill" onclick="selDetail('pitch','bad',this)"><span class="dico">✗</span>Chased</button>
       </div>
+    </div>
+    <div class="drow" id="bat-drow-pitches">
+      <div class="drow-lbl">Pitches Seen</div>
+      <div style="display:flex;align-items:center;gap:0;background:#13151F;border:1.5px solid var(--border2);border-radius:11px;overflow:hidden;width:fit-content">
+        <button onclick="adjBatPitches(-1)" style="background:none;border:none;color:var(--text2);font-size:22px;font-weight:300;padding:8px 18px;cursor:pointer;-webkit-tap-highlight-color:transparent">−</button>
+        <div id="bat-pitch-display" style="font-size:20px;font-weight:800;color:var(--text);min-width:36px;text-align:center">0</div>
+        <button onclick="adjBatPitches(1)" style="background:none;border:none;color:var(--g);font-size:22px;font-weight:300;padding:8px 18px;cursor:pointer;-webkit-tap-highlight-color:transparent">+</button>
+      </div>
+    </div>
+    <div class="drow" id="bat-drow-notes">
+      <div class="drow-lbl">Notes (optional)</div>
+      <textarea class="finput" id="bat-notes-input" rows="2" placeholder="e.g. Hung curveball, drove it to left gap…" maxlength="200" style="resize:none;font-size:14px;padding:10px 12px"></textarea>
     </div>
     <button class="btn btn-g btn-full btn-lg mt12" onclick="confirmBat()">Log It</button>
     <button class="btn btn-ghost btn-full" onclick="closeModal('modal-bat')" style="margin-top:8px">Cancel</button>
@@ -708,7 +868,7 @@
 const POSITIONS = ['P','C','1B','2B','3B','SS','LF','CF','RF','SF','DH','UT'];
 
 function load(){
-  return JSON.parse(localStorage.getItem('ds_data')||'null') || {teams:[],games:[],activeGameId:null};
+  return JSON.parse(localStorage.getItem('ds_data')||'null') || {teams:[],games:[],activeGameId:null,notes:[]};
 }
 function save(d){ localStorage.setItem('ds_data', JSON.stringify(d)); }
 
@@ -722,6 +882,8 @@ let batScored = false;
 let batRBIs = 0;
 let batDetails = {dir:null, traj:null, contact:null, pitch:null};
 let batRunners = 'none';
+let batPitches = 0;
+let batNote = '';
 
 // Temp state for pending field log
 let pendingField = null;
@@ -767,6 +929,8 @@ function renderHeader(name){
       el.innerHTML = `<button class="hdr-btn danger" onclick="gmEndGame()">End Game</button>`;
     } else if(gmCurrentTab==='roster'){
       el.innerHTML = `<button class="hdr-btn am" onclick="openGMAddPlayer()">+ Player</button>`;
+    } else if(gmCurrentTab==='strategy'){
+      el.innerHTML = `<button class="hdr-btn am" onclick="openGMStrategyChat()">+ Note</button>`;
     }
   }
 }
@@ -1011,15 +1175,18 @@ function renderEventEntry(ev, idx, gameId){
     if(ev.traj)    chips.push(`<span class="dchip dchip-traj">${DETAIL_LABELS.traj[ev.traj]||ev.traj}</span>`);
     if(ev.contact) chips.push(`<span class="dchip dchip-contact">${DETAIL_LABELS.contact[ev.contact]||ev.contact}</span>`);
     if(ev.pitch)   chips.push(`<span class="dchip dchip-pitch">${DETAIL_LABELS.pitch[ev.pitch]||ev.pitch}</span>`);
+    if(ev.pitches) chips.push(`<span class="dchip dchip-pitch">${ev.pitches}p</span>`);
     const extrasStr = extras.length ? `<span class="psub-inline"> · ${extras.join(' · ')}</span>` : '';
-    return `<div class="pentry">
+    let batEntryHtml = `<div class="pentry">
       <div class="pbadge ${cls}">${ev.result}</div>
       <div class="flex1">
         <div class="pmain">${batLabel(ev.result)}${extrasStr}</div>
         ${chips.length?`<div class="dchips">${chips.join('')}</div>`:''}
+        ${ev.note?`<div style="font-size:12px;color:var(--text2);margin-top:4px;font-style:italic">"${ev.note}"</div>`:''}
       </div>
       <button class="pundo" onclick="undoEvent('${gameId}',${idx})" title="Undo">×</button>
     </div>`;
+    return batEntryHtml;
   }
   if(ev.type==='field'){
     const cls = ev.play==='E'?'be':ev.play==='OFA'?'bh':'bf';
@@ -1089,6 +1256,10 @@ function logBat(result){
   document.getElementById('bat-drow-contact').style.display = showContact ? 'block' : 'none';
   // Clear all detail pill selections
   document.querySelectorAll('#modal-bat .dpill').forEach(b=>{ b.className='dpill'; });
+  batPitches = 0;
+  batNote = '';
+  document.getElementById('bat-pitch-display').textContent = '0';
+  document.getElementById('bat-notes-input').value = '';
   openModal('modal-bat');
 }
 
@@ -1130,10 +1301,15 @@ function selDetail(group, val, btn){
   }
 }
 
+function adjBatPitches(d){
+  batPitches = Math.max(0, Math.min(15, batPitches+d));
+  document.getElementById('bat-pitch-display').textContent = batPitches;
+}
+
 function confirmBat(){
   if(!db.activeGameId || !pendingBat) return;
   const game = db.games.find(g=>g.id===db.activeGameId);
-  game.events.push({type:'bat',result:pendingBat,rbis:batRBIs,scored:batScored,runners:batRunners,...batDetails});
+  game.events.push({type:'bat',result:pendingBat,rbis:batRBIs,scored:batScored,runners:batRunners,...batDetails, pitches:batPitches||undefined, note:(document.getElementById('bat-notes-input').value||'').trim()||undefined});
   save(db);
   closeModal('modal-bat');
   const extras = [];
@@ -1273,8 +1449,8 @@ function endGame(){
 
 function statsTab(tab){
   currentStatsTab = tab;
-  document.querySelectorAll('.segb').forEach((b,i)=>{
-    b.classList.toggle('act', ['overall','batting','fielding'][i]===tab);
+  document.querySelectorAll('#scr-stats .segb').forEach((b,i)=>{
+    b.classList.toggle('act', ['overall','batting','fielding','notes'][i]===tab);
   });
   renderStats(tab);
 }
@@ -1303,6 +1479,7 @@ function renderYearPicker(){
 
 function renderStats(tab){
   const el = document.getElementById('statsContent');
+  if(tab==='notes'){ renderNotes(el); return; }
   if(!db.games.length){
     el.innerHTML = `<div class="empty"><div class="empty-ico">📊</div><h3>No games yet</h3><p>Start a game and log plays to see your stats here.</p></div>`;
     return;
@@ -2332,7 +2509,7 @@ function toast(msg){
 // ─── GM MODE ─────────────────────────────────────────────────────────────────
 
 function loadGM(){
-  return JSON.parse(localStorage.getItem('gm_data')||'null') || {roster:[], games:[], activeGameId:null};
+  return JSON.parse(localStorage.getItem('gm_data')||'null') || {roster:[], games:[], activeGameId:null, strategy:{lineupPlan:[], positionPlan:{}, chat:[]}};
 }
 function saveGM(){ localStorage.setItem('gm_data', JSON.stringify(gmDb)); }
 
@@ -2351,6 +2528,7 @@ gmDb.games.forEach(g=>{
   if(!g.lineup) g.lineup = [];
 });
 saveGM();
+if(!gmDb.strategy) gmDb.strategy = {lineupPlan:[], positionPlan:{}, chat:[]};
 
 let gmCurrentTab = 'home';
 // Pending PA state for the PA modal
@@ -2654,7 +2832,7 @@ function gmScoreTotals(game){
 function gmTab(tab){
   gmCurrentTab = tab;
   document.querySelectorAll('#gm-seg .segb').forEach((b,i)=>{
-    b.classList.toggle('act', ['home','book','roster','stats'][i]===tab);
+    b.classList.toggle('act', ['home','book','roster','stats','strategy'][i]===tab);
   });
   renderHeader('gm');
   renderGM(tab);
@@ -2663,10 +2841,11 @@ function gmTab(tab){
 function renderGM(tab){
   const el = document.getElementById('gmContent');
   if(!el) return;
-  if(tab==='home')   renderGMHome(el);
-  if(tab==='book')   renderGMBook(el);
-  if(tab==='roster') renderGMRoster(el);
-  if(tab==='stats')  renderGMStats(el);
+  if(tab==='home')     renderGMHome(el);
+  if(tab==='book')     renderGMBook(el);
+  if(tab==='roster')   renderGMRoster(el);
+  if(tab==='stats')    renderGMStats(el);
+  if(tab==='strategy') renderGMStrategy(el);
 }
 
 // ── GM Result Label ───────────────────────────────────────────────────────────
@@ -3632,6 +3811,770 @@ function openGMGameDetail(id){
   }
   document.getElementById('game-detail-content').innerHTML = html;
   openModal('modal-game');
+}
+
+// ── GM Strategy / Lineup Lab ──────────────────────────────────────────────────
+
+let gmStratSubTab = 'lab-lineup'; // 'lab-lineup'|'lab-field'|'lab-insights'|'versions'|'chat'
+let gmChatAuthor = 'me';
+let gmLabSelectedPid = null; // player selected in pool
+
+// Position fit map
+const POS_FIT = {
+  'P':  {great:['P'],          ok:['C','1B']},
+  'C':  {great:['C'],          ok:['P','1B']},
+  '1B': {great:['1B'],         ok:['3B','C']},
+  '2B': {great:['2B'],         ok:['SS','3B']},
+  '3B': {great:['3B'],         ok:['1B','SS','2B']},
+  'SS': {great:['SS'],         ok:['2B','3B']},
+  'LF': {great:['LF','OF'],    ok:['RF','SF','CF']},
+  'CF': {great:['CF','OF'],    ok:['LF','RF','SF']},
+  'RF': {great:['RF','OF'],    ok:['LF','SF','CF']},
+  'SF': {great:['SF','OF'],    ok:['LF','RF','CF']},
+};
+
+const BATTING_ROLES = ['Leadoff','2-Hole','3-Hole','Cleanup','5th','6th','7th','8th','9th','10th'];
+
+const ALL_PLAYER_TAGS = ['leadoff','power','speed','anchor','utility','clutch','veteran','hot','cold'];
+
+const RATING_DEFS = [
+  {key:'contact', label:'Contact'},
+  {key:'power',   label:'Power'},
+  {key:'speed',   label:'Speed'},
+  {key:'arm',     label:'Arm'},
+  {key:'glove',   label:'Glove'},
+  {key:'range',   label:'Range'},
+  {key:'reliability', label:'Reliability'},
+  {key:'iq',      label:'BB IQ'},
+  {key:'clutch',  label:'Clutch'},
+];
+
+const FIELD_POSITIONS_LAYOUT = [
+  {pos:'P',  x:50, y:55},
+  {pos:'C',  x:50, y:88},
+  {pos:'1B', x:74, y:65},
+  {pos:'2B', x:67, y:46},
+  {pos:'3B', x:26, y:65},
+  {pos:'SS', x:33, y:46},
+  {pos:'LF', x:16, y:26},
+  {pos:'CF', x:50, y:16},
+  {pos:'RF', x:84, y:26},
+  {pos:'SF', x:50, y:36},
+];
+
+function getPosFit(playerPos, fieldPos){
+  if(!playerPos || !fieldPos) return 'unknown';
+  const map = POS_FIT[fieldPos];
+  if(!map) return 'unknown';
+  if(map.great.includes(playerPos)) return 'great';
+  if(map.ok.includes(playerPos)) return 'ok';
+  return 'bad';
+}
+
+function gmPlayerRatings(p){
+  return p.ratings || {contact:5,power:5,speed:5,arm:5,glove:5,range:5,reliability:5,iq:5,clutch:5};
+}
+
+function gmLabScores(){
+  if(!gmDb.strategy) return {off:0,def:0,bal:0};
+  const lineup = gmDb.strategy.lineupPlan || [];
+  const field  = gmDb.strategy.positionPlan || {};
+  const roster = gmDb.roster;
+
+  // Offense: AVG weight .35 + OBP .35 + power rating .3
+  let offSum = 0, offCount = 0;
+  lineup.forEach(pid=>{
+    const p = roster.find(r=>r.id===pid);
+    if(!p) return;
+    const st = gmPlayerSeasonStats(pid);
+    const avg = parseFloat(st.avg)||.250;
+    const obp = parseFloat(st.obp)||.300;
+    const r = gmPlayerRatings(p);
+    offSum += (avg/.400*.35 + obp/.500*.35 + r.power/10*.3) * 100;
+    offCount++;
+  });
+  const offScore = offCount ? Math.round(offSum/offCount) : 0;
+
+  // Defense: position fit .5 + glove .25 + arm .15 + range .1
+  let defSum = 0, defCount = 0;
+  Object.entries(field).forEach(([pid, pos])=>{
+    const p = roster.find(r=>r.id===pid);
+    if(!p) return;
+    const r = gmPlayerRatings(p);
+    const fit = getPosFit(p.position||'', pos);
+    const fitScore = fit==='great'?1 : fit==='ok'?.65 : .25;
+    defSum += (fitScore*.5 + r.glove/10*.25 + r.arm/10*.15 + r.range/10*.1) * 100;
+    defCount++;
+  });
+  const defScore = defCount ? Math.round(defSum/defCount) : 0;
+
+  // Balance: mix of speed/OBP at top, power in middle, reliability throughout
+  const balScore = lineup.length >= 4 ? Math.min(100, Math.round((offScore + defScore) / 2 * 0.95 + lineup.length * 2)) : 0;
+
+  return {off:offScore, def:defScore, bal:balScore};
+}
+
+function gmLabInsights(){
+  const roster = gmDb.roster.filter(p=>p.active!==false);
+  const lineup = gmDb.strategy.lineupPlan || [];
+  const field  = gmDb.strategy.positionPlan || {};
+  const insights = [];
+
+  if(!roster.length) return insights;
+
+  // Best leadoff candidate (high OBP + speed rating)
+  const leadoffScores = roster.map(p=>{
+    const st = gmPlayerSeasonStats(p.id);
+    const r  = gmPlayerRatings(p);
+    return {p, score: (parseFloat(st.obp)||.3)*0.6 + (r.speed/10)*0.4};
+  }).sort((a,b)=>b.score-a.score);
+  if(leadoffScores[0]){
+    const lc = leadoffScores[0];
+    const isLeadoff = lineup[0]===lc.p.id;
+    insights.push({ico:'⚡',title:'Best Leadoff Candidate',items:[
+      {text: lc.p.name, detail:`OBP ${gmPlayerSeasonStats(lc.p.id).obp} · Speed ${gmPlayerRatings(lc.p).speed}/10`, cls: isLeadoff?'ins-g':'ins-am', pill: isLeadoff?'In Spot 1':'Not Leading Off'}
+    ]});
+  }
+
+  // Best cleanup hitter (power + HR)
+  const cleanupScores = roster.map(p=>{
+    const st = gmPlayerSeasonStats(p.id);
+    const r  = gmPlayerRatings(p);
+    return {p, score: r.power*.6 + st.hr*.4 + (parseFloat(st.avg)||.25)*5};
+  }).sort((a,b)=>b.score-a.score);
+  if(cleanupScores[0]){
+    const cc = cleanupScores[0];
+    const isCleanup = lineup[3]===cc.p.id;
+    insights.push({ico:'💥',title:'Best Cleanup Hitter',items:[
+      {text: cc.p.name, detail:`Power ${gmPlayerRatings(cc.p).power}/10 · ${gmPlayerSeasonStats(cc.p.id).hr} HR`, cls: isCleanup?'ins-g':'ins-am', pill: isCleanup?'In Cleanup':'Not at 4'}
+    ]});
+  }
+
+  // Weak defensive spots
+  const weakSpots = [];
+  FIELD_POSITIONS_LAYOUT.forEach(({pos})=>{
+    const pid = Object.keys(field).find(k=>field[k]===pos);
+    if(!pid){
+      weakSpots.push({text:`${pos} unassigned`, detail:'No player placed here', cls:'ins-red', pill:'Empty'});
+    } else {
+      const p = roster.find(r=>r.id===pid);
+      if(p){
+        const fit = getPosFit(p.position||'', pos);
+        if(fit==='bad') weakSpots.push({text:`${p.name} at ${pos}`, detail:`Natural position: ${p.position||'?'}`, cls:'ins-red', pill:'Out of Pos'});
+        else if(fit==='ok') weakSpots.push({text:`${p.name} at ${pos}`, detail:`Stretch from ${p.position||'?'}`, cls:'ins-am', pill:'Stretch'});
+      }
+    }
+  });
+  if(weakSpots.length){
+    insights.push({ico:'🛡',title:'Defensive Notes',items:weakSpots.slice(0,4)});
+  }
+
+  // Strongest outfield combo
+  const ofCandidates = roster.map(p=>{
+    const r = gmPlayerRatings(p);
+    return {p, score: r.range*.4 + r.glove*.4 + r.arm*.2};
+  }).sort((a,b)=>b.score-a.score).slice(0,4);
+  if(ofCandidates.length>=3){
+    insights.push({ico:'🌿',title:'Strongest Outfield Combo',items:
+      ofCandidates.map(({p,score})=>({text:p.name, detail:`Range ${gmPlayerRatings(p).range} Glove ${gmPlayerRatings(p).glove} Arm ${gmPlayerRatings(p).arm}`, cls:'ins-blue', pill:`${Math.round(score)}/10`}))
+    });
+  }
+
+  // Players batting out of optimal position
+  const outOfSlot = [];
+  lineup.forEach((pid,i)=>{
+    const p = roster.find(r=>r.id===pid);
+    if(!p) return;
+    const r = gmPlayerRatings(p);
+    const tags = p.tags||[];
+    if(i===0 && tags.includes('power') && !tags.includes('leadoff') && !tags.includes('speed')){
+      outOfSlot.push({text:`${p.name} leading off`, detail:'Power hitter — consider lower', cls:'ins-am', pill:'Consider Move'});
+    }
+    if(i>=7 && (tags.includes('anchor') || tags.includes('clutch'))){
+      outOfSlot.push({text:`${p.name} batting ${i+1}`, detail:'Your anchor/clutch hitter bats late', cls:'ins-am', pill:'Worth Moving Up'});
+    }
+  });
+  if(outOfSlot.length){
+    insights.push({ico:'📋',title:'Batting Order Notes',items:outOfSlot});
+  }
+
+  // G2 suggestion
+  if(gmDb.games && gmDb.games.length){
+    const lastGame = [...gmDb.games].filter(g=>g.status==='final').sort((a,b)=>b.date-a.date)[0];
+    if(lastGame){
+      const st = gmDeriveState(lastGame);
+      const totals = {us:st.innings.reduce((s,i)=>s+(i.us||0),0)};
+      if(totals.us < 5){
+        insights.push({ico:'🔄',title:'Game 2 Consideration',items:[
+          {text:'Low run output last game', detail:`Only ${totals.us} runs scored — consider shuffling order`, cls:'ins-am', pill:'G2 Change?'}
+        ]});
+      }
+    }
+  }
+
+  return insights;
+}
+
+function renderGMStrategy(el){
+  if(!el) el = document.getElementById('gmContent');
+  if(!gmDb.strategy) gmDb.strategy = {lineupPlan:[], positionPlan:{}, chat:[], versions:[]};
+  if(!gmDb.strategy.versions) gmDb.strategy.versions = [];
+  const tabs = [
+    {id:'lab-lineup',   label:'📋 Lineup'},
+    {id:'lab-field',    label:'🏟 Field'},
+    {id:'lab-insights', label:'💡 Insights'},
+    {id:'versions',     label:'📁 Versions'},
+    {id:'chat',         label:'💬 War Room'},
+  ];
+  let html = `<div class="strat-subtab">`;
+  tabs.forEach(t=>{
+    html += `<button class="strat-stb${gmStratSubTab===t.id?' act':''}" onclick="gmStratTab('${t.id}')">${t.label}</button>`;
+  });
+  html += `</div>`;
+
+  // Score badges — always visible
+  const scores = gmLabScores();
+  const scoreColor = v => v>=70?'var(--g)':v>=40?'var(--am)':'var(--red)';
+  html += `<div class="lab-scores">
+    <div class="lab-score-card">
+      <div class="lab-score-val" style="color:${scoreColor(scores.off)}">${scores.off}</div>
+      <div class="lab-score-lbl">Offense</div>
+      <div class="lab-score-bar"><div class="lab-score-fill" style="width:${scores.off}%;background:${scoreColor(scores.off)}"></div></div>
+    </div>
+    <div class="lab-score-card">
+      <div class="lab-score-val" style="color:${scoreColor(scores.def)}">${scores.def}</div>
+      <div class="lab-score-lbl">Defense</div>
+      <div class="lab-score-bar"><div class="lab-score-fill" style="width:${scores.def}%;background:${scoreColor(scores.def)}"></div></div>
+    </div>
+    <div class="lab-score-card">
+      <div class="lab-score-val" style="color:${scoreColor(scores.bal)}">${scores.bal}</div>
+      <div class="lab-score-lbl">Balance</div>
+      <div class="lab-score-bar"><div class="lab-score-fill" style="width:${scores.bal}%;background:${scoreColor(scores.bal)}"></div></div>
+    </div>
+  </div>`;
+
+  if(gmStratSubTab==='lab-lineup')    html += gmLabLineupHTML();
+  else if(gmStratSubTab==='lab-field') html += gmLabFieldHTML();
+  else if(gmStratSubTab==='lab-insights') html += gmLabInsightsHTML();
+  else if(gmStratSubTab==='versions')  html += gmLabVersionsHTML();
+  else html += gmStratChatHTML();
+
+  el.innerHTML = html;
+  if(gmStratSubTab==='chat'){
+    const thread = document.getElementById('gm-chat-thread');
+    if(thread) thread.scrollTop = thread.scrollHeight;
+  }
+}
+
+function gmStratTab(tab){
+  gmStratSubTab = tab;
+  renderGMStrategy();
+}
+
+// ── Player Pool HTML ──
+function gmPlayerPoolHTML(assignedSet){
+  const roster = gmDb.roster.filter(p=>p.active!==false).sort((a,b)=>(a.number||999)-(b.number||999));
+  if(!roster.length) return `<div class="empty" style="padding:20px 0"><div class="empty-ico" style="font-size:32px">👥</div><p style="font-size:13px;color:var(--text2)">Add players in the Roster tab first.</p></div>`;
+  let html = `<div class="player-pool-wrap">
+    <div class="player-pool-lbl"><span>Player Pool</span><span style="font-size:11px;color:var(--text2);font-weight:500">${gmLabSelectedPid?'Tap a slot to assign':'Tap a player to select'}</span></div>
+    <div class="player-pool">`;
+  roster.forEach(p=>{
+    const st = gmPlayerSeasonStats(p.id);
+    const isSelected = gmLabSelectedPid === p.id;
+    const isAssigned = assignedSet && assignedSet.has(p.id);
+    const tags = p.tags || [];
+    const tagHTML = tags.slice(0,2).map(t=>`<span class="ptag ptag-${t}">${t}</span>`).join('');
+    html += `<div class="ppool-card${isSelected?' selected':''}${isAssigned&&!isSelected?' is-assigned':''}" onclick="gmLabSelectPlayer('${p.id}')">
+      <button class="ppool-edit-btn" onclick="event.stopPropagation();openGMRatingsModal('${p.id}')">✏️</button>
+      <div class="ppool-num">#${p.number||'—'}</div>
+      <div class="ppool-name">${p.name.split(' ')[0]}</div>
+      <div class="ppool-pos">${p.position||'—'}</div>
+      <div class="ppool-stat">${st.avg}</div>
+      <div class="ppool-stat-lbl">AVG</div>
+      <div class="ppool-tags">${tagHTML}</div>
+    </div>`;
+  });
+  html += `</div></div>`;
+  return html;
+}
+
+function gmLabSelectPlayer(pid){
+  gmLabSelectedPid = gmLabSelectedPid===pid ? null : pid;
+  renderGMStrategy();
+}
+
+// ── Lab Lineup Tab ──
+function gmLabLineupHTML(){
+  const plan = gmDb.strategy.lineupPlan || [];
+  const assignedSet = new Set(plan);
+  let html = gmPlayerPoolHTML(assignedSet);
+  html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Batting Order (${plan.length}/10)</div>
+    <div style="display:flex;gap:6px">
+      ${plan.length?`<button class="btn btn-ghost btn-sm" onclick="gmStratClearLineup()" style="padding:5px 10px;font-size:11px">Clear</button>`:''}
+      ${plan.length>=4?`<button class="btn btn-ghost btn-sm" onclick="openSaveVersionModal()" style="padding:5px 10px;font-size:11px">Save Version</button>`:''}
+    </div>
+  </div>`;
+  for(let i=0;i<10;i++){
+    const pid = plan[i];
+    const p = pid ? gmDb.roster.find(r=>r.id===pid) : null;
+    const isFilled = !!p;
+    const role = BATTING_ROLES[i]||`${i+1}th`;
+    const isTarget = !p && gmLabSelectedPid;
+    const st = p ? gmPlayerSeasonStats(pid) : null;
+    const fit = p ? gmLabBattingFit(p, i) : null;
+    const fitCls = fit==='great'?'bo-fit-great':fit==='ok'?'bo-fit-ok':'bo-fit-bad';
+    const fitLbl = fit==='great'?'✓ Great':fit==='ok'?'~ OK':'⚠ Mismatch';
+    html += `<div class="bo-slot${isFilled?' filled':''}${isTarget?' await':''}" onclick="gmLabAssignToBattingSlot(${i})">
+      <div class="bo-num${isFilled?' filled':''}">${i+1}</div>
+      <div style="flex:1;min-width:0">
+        ${isFilled?`
+          <div class="bo-role">${role}</div>
+          <div class="bo-pname">${p.name}</div>
+          <div class="bo-pstats">${st.avg} AVG · ${st.obp} OBP · ${st.hr} HR${p.position?' · '+p.position:''}</div>
+        `:`
+          <div class="bo-role">${role}</div>
+          <div style="font-size:13px;color:var(--muted);margin-top:2px">${gmLabSelectedPid?'← Tap to assign selected player':'Empty slot'}</div>
+        `}
+      </div>
+      ${isFilled&&fit?`<div class="bo-fit ${fitCls}">${fitLbl}</div>`:''}
+      ${isFilled?`<button onclick="event.stopPropagation();gmLabRemoveFromBatting(${i})" style="background:none;border:none;color:var(--muted);font-size:20px;padding:4px;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0;margin-left:4px">×</button>`:''}
+    </div>`;
+  }
+  // Show move controls for filled slots
+  if(plan.length>1){
+    html += `<div style="text-align:center;font-size:12px;color:var(--text2);margin-top:6px;margin-bottom:8px">Tap any filled slot to reorder: hold player then tap its new spot</div>`;
+  }
+  return html;
+}
+
+function gmLabBattingFit(p, slotIdx){
+  const tags = p.tags || [];
+  const r = gmPlayerRatings(p);
+  if(slotIdx===0){
+    if(tags.includes('leadoff')||tags.includes('speed')||(r.speed>=7&&r.contact>=7)) return 'great';
+    if(tags.includes('anchor')||tags.includes('power')) return 'bad';
+    return 'ok';
+  }
+  if(slotIdx===3){
+    if(tags.includes('power')||(r.power>=7&&r.contact>=6)) return 'great';
+    if(tags.includes('leadoff')&&!tags.includes('power')) return 'ok';
+    return 'ok';
+  }
+  if(slotIdx===1||slotIdx===2){
+    if(r.contact>=7) return 'great';
+    return 'ok';
+  }
+  return 'ok';
+}
+
+function gmLabAssignToBattingSlot(idx){
+  const plan = gmDb.strategy.lineupPlan;
+  const currentAtSlot = plan[idx];
+  if(currentAtSlot && !gmLabSelectedPid){
+    // Move this player: if no one selected, select the player in this slot
+    gmLabSelectedPid = currentAtSlot;
+    renderGMStrategy();
+    return;
+  }
+  if(gmLabSelectedPid){
+    // Check if selected player is already in lineup
+    const existingIdx = plan.indexOf(gmLabSelectedPid);
+    if(existingIdx>=0) plan.splice(existingIdx,1); // remove from old spot
+    // Ensure plan is long enough
+    while(plan.length<idx) plan.push(null);
+    plan.splice(idx, 0, gmLabSelectedPid);
+    // Clean nulls but only trailing
+    while(plan.length && plan[plan.length-1]===null) plan.pop();
+    gmLabSelectedPid = null;
+    saveGM();
+    renderGMStrategy();
+  }
+}
+
+function gmLabRemoveFromBatting(idx){
+  gmDb.strategy.lineupPlan.splice(idx,1);
+  saveGM();
+  renderGMStrategy();
+}
+
+// ── Lab Field Tab ──
+function gmLabFieldHTML(){
+  const plan  = gmDb.strategy.positionPlan || {};
+  const assignedSet = new Set(Object.keys(plan));
+  let html = gmPlayerPoolHTML(assignedSet);
+
+  let posHTML = '';
+  FIELD_POSITIONS_LAYOUT.forEach(({pos,x,y})=>{
+    const pid   = Object.keys(plan).find(k=>plan[k]===pos);
+    const p     = pid ? gmDb.roster.find(r=>r.id===pid) : null;
+    const fit   = p ? getPosFit(p.position||'', pos) : null;
+    const fitCls = fit==='great'?'fit-great':fit==='ok'?'fit-ok':fit==='bad'?'fit-bad':'';
+    const isAwait = !p && gmLabSelectedPid;
+    const fname = p ? p.name.split(' ')[0] : '';
+    posHTML += `<div class="lab-fpos" style="left:${x}%;top:${y}%" onclick="gmLabAssignToField('${pos}')">
+      <div class="lab-fpos-btn${p?' filled':''}${isAwait?' await':''}${fitCls?' '+fitCls:''}">
+        <span class="lab-fpos-lbl">${pos}</span>
+        <span class="lab-fpos-name">${fname}</span>
+      </div>
+    </div>`;
+  });
+
+  html += `<div class="lab-field-wrap">
+    <div class="lab-field-inner">
+      <svg class="lab-field-svg" viewBox="0 0 100 112" preserveAspectRatio="xMidYMid meet">
+        <path d="M50,92 L12,92 Q 50,4 88,92 Z" fill="rgba(74,222,128,.04)" stroke="rgba(74,222,128,.12)" stroke-width=".7"/>
+        <polygon points="50,62 74,72 50,93 26,72" fill="rgba(180,120,40,.12)" stroke="rgba(255,255,255,.1)" stroke-width=".7"/>
+        <line x1="50" y1="92" x2="10" y2="8" stroke="rgba(255,255,255,.06)" stroke-width=".5"/>
+        <line x1="50" y1="92" x2="90" y2="8" stroke="rgba(255,255,255,.06)" stroke-width=".5"/>
+        <circle cx="50" cy="62" r="1.5" fill="rgba(255,255,255,.3)"/>
+        <circle cx="74" cy="72" r="1.5" fill="rgba(255,255,255,.2)"/>
+        <circle cx="26" cy="72" r="1.5" fill="rgba(255,255,255,.2)"/>
+        <circle cx="50" cy="93" r="2" fill="rgba(255,255,255,.25)"/>
+      </svg>
+      ${posHTML}
+    </div>
+  </div>`;
+
+  // Legend
+  html += `<div style="display:flex;gap:10px;justify-content:center;margin-bottom:12px;flex-wrap:wrap">
+    <span style="font-size:11px;font-weight:700;color:var(--g)">🟢 Natural Pos</span>
+    <span style="font-size:11px;font-weight:700;color:var(--am)">🟡 Stretch</span>
+    <span style="font-size:11px;font-weight:700;color:var(--red)">🔴 Out of Pos</span>
+  </div>`;
+
+  // Assignment list
+  const filled = FIELD_POSITIONS_LAYOUT.filter(({pos})=>Object.values(plan).includes(pos));
+  const empty  = FIELD_POSITIONS_LAYOUT.filter(({pos})=>!Object.values(plan).includes(pos));
+  if(filled.length){
+    html += `<div class="card"><div class="card-title">Current Assignments (${filled.length}/10)</div>`;
+    FIELD_POSITIONS_LAYOUT.forEach(({pos})=>{
+      const pid = Object.keys(plan).find(k=>plan[k]===pos);
+      const p   = pid ? gmDb.roster.find(r=>r.id===pid) : null;
+      const fit = p ? getPosFit(p.position||'', pos) : null;
+      const fitColor = fit==='great'?'var(--g)':fit==='ok'?'var(--am)':fit==='bad'?'var(--red)':'var(--muted)';
+      const fitLbl = fit==='great'?'Natural':fit==='ok'?'Stretch':fit==='bad'?'Out of Pos':'—';
+      html += `<div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--border)">
+        <div style="width:34px;font-size:13px;font-weight:900;color:var(--text2)">${pos}</div>
+        <div style="flex:1;font-size:14px;font-weight:700;color:${p?'var(--text)':'var(--muted)'}">${p?p.name:'— unassigned —'}</div>
+        ${p?`<span style="font-size:11px;font-weight:700;color:${fitColor}">${fitLbl}</span><button onclick="gmLabClearFieldPos('${pid}')" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;-webkit-tap-highlight-color:transparent;padding:2px 4px">×</button>`:''}
+      </div>`;
+    });
+    html += `</div>`;
+  }
+  if(Object.keys(plan).length){
+    html += `<button class="btn btn-ghost btn-full btn-sm" onclick="gmStratClearAllPos()" style="margin-bottom:12px">Clear All Positions</button>`;
+  }
+  return html;
+}
+
+function gmLabAssignToField(pos){
+  if(!gmLabSelectedPid){ toast('Select a player first'); return; }
+  const plan = gmDb.strategy.positionPlan;
+  // Remove pid from any current position
+  Object.keys(plan).forEach(k=>{ if(k===gmLabSelectedPid) delete plan[k]; });
+  // Remove whoever was at this pos
+  Object.keys(plan).forEach(k=>{ if(plan[k]===pos) delete plan[k]; });
+  plan[gmLabSelectedPid] = pos;
+  gmLabSelectedPid = null;
+  saveGM();
+  renderGMStrategy();
+  const p = gmDb.roster.find(r=>r.id===Object.keys(plan).find(k=>plan[k]===pos));
+  if(p){ const fit=getPosFit(p.position||'',pos); toast(fit==='great'?`✓ ${p.name} → ${pos}`:`${p.name} → ${pos} (${fit})`); }
+}
+
+function gmLabClearFieldPos(pid){
+  delete gmDb.strategy.positionPlan[pid];
+  saveGM();
+  renderGMStrategy();
+}
+
+// ── Lab Insights Tab ──
+function gmLabInsightsHTML(){
+  const items = gmLabInsights();
+  if(!gmDb.roster.length){
+    return `<div class="empty"><div class="empty-ico">💡</div><h3>No data yet</h3><p>Add players and assign your lineup and field positions to see live insights.</p></div>`;
+  }
+  let html = '';
+  items.forEach(({ico,title,items:rows})=>{
+    html += `<div class="ins-card"><div class="ins-hd"><span class="ins-ico">${ico}</span><span class="ins-title">${title}</span></div>`;
+    rows.forEach(({text,detail,cls,pill})=>{
+      html += `<div class="ins-item">
+        <span class="ins-pill ${cls}">${pill}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700;color:var(--text)">${text}</div>
+          ${detail?`<div style="font-size:11px;color:var(--text2);margin-top:1px">${detail}</div>`:''}
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  if(!items.length){
+    html = `<div class="card" style="text-align:center;padding:20px"><div style="font-size:32px;margin-bottom:8px">💡</div><div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">Build your lineup to see insights</div><div style="font-size:13px;color:var(--text2)">Assign players to the batting order and field positions to unlock live suggestions.</div></div>`;
+  }
+  return html;
+}
+
+// ── Versions ──
+function gmLabVersionsHTML(){
+  const versions = gmDb.strategy.versions || [];
+  let html = `<button class="btn btn-g btn-full" onclick="openSaveVersionModal()" style="margin-bottom:14px">💾 Save Current Lineup as Version</button>`;
+  if(!versions.length){
+    html += `<div class="empty" style="padding:24px 0"><div class="empty-ico">📁</div><h3>No saved versions</h3><p>Save your current lineup setup to compare against alternatives later.</p></div>`;
+    return html;
+  }
+  const sorted = [...versions].sort((a,b)=>b.createdAt-a.createdAt);
+  sorted.forEach(v=>{
+    const d = new Date(v.createdAt);
+    const dateLbl = d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    // Compute scores for this version
+    const savedStrat = JSON.parse(JSON.stringify(gmDb.strategy));
+    gmDb.strategy.lineupPlan = v.lineupPlan;
+    gmDb.strategy.positionPlan = v.positionPlan;
+    const sc = gmLabScores();
+    gmDb.strategy.lineupPlan = savedStrat.lineupPlan;
+    gmDb.strategy.positionPlan = savedStrat.positionPlan;
+
+    const lineupNames = (v.lineupPlan||[]).slice(0,4).map(pid=>{
+      const p = gmDb.roster.find(r=>r.id===pid);
+      return p?p.name.split(' ')[0]:'?';
+    }).join(', ');
+    const isCurrent = JSON.stringify(v.lineupPlan)===JSON.stringify(gmDb.strategy.lineupPlan);
+    html += `<div class="ver-card${isCurrent?' active-ver':''}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="flex:1;min-width:0">
+          <div class="ver-name">${v.name}</div>
+          <div class="ver-meta">${dateLbl} · ${v.lineupPlan.length} players · ${lineupNames}${lineupNames&&v.lineupPlan.length>4?'…':''}</div>
+          <div class="ver-scores">
+            <span class="ver-score-badge" style="background:rgba(74,222,128,.1);color:var(--g)">OFF ${sc.off}</span>
+            <span class="ver-score-badge" style="background:rgba(129,140,248,.1);color:var(--blue)">DEF ${sc.def}</span>
+            <span class="ver-score-badge">BAL ${sc.bal}</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+          <button class="btn btn-g btn-sm" onclick="gmLoadVersion('${v.id}')" style="padding:6px 12px;font-size:12px">Load</button>
+          <button class="btn btn-red btn-sm" onclick="gmDeleteVersion('${v.id}')" style="padding:6px 12px;font-size:12px">Del</button>
+        </div>
+      </div>
+    </div>`;
+  });
+  return html;
+}
+
+function openSaveVersionModal(){
+  const d = new Date();
+  document.getElementById('gm-version-name-input').value = `Lineup ${d.getMonth()+1}/${d.getDate()}`;
+  openModal('modal-gm-version');
+  setTimeout(()=>document.getElementById('gm-version-name-input').select(),200);
+}
+
+function gmSaveVersion(){
+  const name = (document.getElementById('gm-version-name-input').value||'').trim();
+  if(!name){ toast('Enter a name'); return; }
+  if(!gmDb.strategy.versions) gmDb.strategy.versions=[];
+  gmDb.strategy.versions.push({
+    id:uid(), name, createdAt:Date.now(),
+    lineupPlan:[...gmDb.strategy.lineupPlan],
+    positionPlan:{...gmDb.strategy.positionPlan}
+  });
+  saveGM();
+  closeModal('modal-gm-version');
+  gmStratSubTab='versions';
+  renderGMStrategy();
+  toast('Version saved!');
+}
+
+function gmLoadVersion(id){
+  const v = gmDb.strategy.versions.find(v=>v.id===id);
+  if(!v) return;
+  if(!confirm(`Load "${v.name}"? This replaces your current lineup.`)) return;
+  gmDb.strategy.lineupPlan = [...v.lineupPlan];
+  gmDb.strategy.positionPlan = {...v.positionPlan};
+  gmLabSelectedPid = null;
+  saveGM();
+  gmStratSubTab = 'lab-lineup';
+  renderGMStrategy();
+  toast(`"${v.name}" loaded!`);
+}
+
+function gmDeleteVersion(id){
+  const v = gmDb.strategy.versions.find(v=>v.id===id);
+  if(!v || !confirm(`Delete "${v.name}"?`)) return;
+  gmDb.strategy.versions = gmDb.strategy.versions.filter(v=>v.id!==id);
+  saveGM();
+  renderGMStrategy();
+  toast('Version deleted');
+}
+
+// ── War Room Chat ──
+function gmStratChatHTML(){
+  const chat = gmDb.strategy.chat || [];
+  const broName = gmDb.strategy.broName || 'Bro';
+  let html = `<div class="card" style="padding:12px 14px;margin-bottom:10px">
+    <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Who's typing?</div>
+    <div class="strat-who">
+      <button class="strat-who-btn${gmChatAuthor==='me'?' sel-me':''}" onclick="gmSetAuthor('me')">👤 Me</button>
+      <button class="strat-who-btn${gmChatAuthor==='bro'?' sel-bro':''}" onclick="gmSetAuthor('bro')">👤 ${broName}</button>
+    </div>
+    ${gmChatAuthor==='bro'?`<div style="font-size:11px;color:var(--text2)">Your brother's name: <input class="finput" value="${broName}" style="display:inline-block;width:110px;padding:4px 8px;font-size:13px;margin-left:6px" oninput="gmSaveBroName(this.value)"></div>`:''}
+  </div>`;
+  if(!chat.length){
+    html += `<div class="empty" style="padding:24px 0"><div class="empty-ico">💬</div><h3>Start the war room</h3><p>Discuss lineups, positions, and matchups with your brother right here.</p></div>`;
+  } else {
+    html += `<div class="chat-thread" id="gm-chat-thread" style="max-height:380px;overflow-y:auto;padding-bottom:8px">`;
+    chat.forEach((msg,i)=>{
+      const isMine = msg.author==='me';
+      const authorName = isMine ? 'Me' : (gmDb.strategy.broName||'Bro');
+      const d = new Date(msg.ts);
+      const ts = d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+      html += `<div style="display:flex;flex-direction:column;align-items:${isMine?'flex-end':'flex-start'}">
+        <div class="chat-author ${isMine?'me':'bro'}">${authorName}</div>
+        <div class="chat-msg ${isMine?'me':'bro'}">${msg.text.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
+        <div class="chat-ts" style="text-align:${isMine?'right':'left'}">${ts}<button onclick="gmDeleteChat(${i})" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;margin-left:6px;-webkit-tap-highlight-color:transparent">×</button></div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+  html += `<div class="strat-chat-input">
+    <textarea class="finput" id="gm-chat-text" rows="2" placeholder="e.g. Move Jake to cleanup — he's 4 for his last 6 with 3 RBI…" style="flex:1;resize:none;font-size:14px;padding:10px 12px"></textarea>
+    <button class="btn btn-g" style="align-self:stretch;padding:0 18px" onclick="gmSendChat()">Send</button>
+  </div>`;
+  return html;
+}
+
+function gmSetAuthor(who){ gmChatAuthor=who; renderGMStrategy(); }
+function gmSaveBroName(name){ gmDb.strategy.broName=name||'Bro'; saveGM(); }
+function gmSendChat(){
+  const text=(document.getElementById('gm-chat-text')||{}).value;
+  if(!text||!text.trim()){toast('Type something first');return;}
+  if(!gmDb.strategy.chat) gmDb.strategy.chat=[];
+  gmDb.strategy.chat.push({author:gmChatAuthor,text:text.trim(),ts:Date.now()});
+  saveGM(); renderGMStrategy();
+  setTimeout(()=>{const t=document.getElementById('gm-chat-thread');if(t)t.scrollTop=t.scrollHeight;},50);
+}
+function gmDeleteChat(idx){ gmDb.strategy.chat.splice(idx,1); saveGM(); renderGMStrategy(); }
+function openGMStrategyChat(){ gmStratSubTab='chat'; renderGMStrategy(); }
+
+// ── Ratings Modal ──
+let gmEditingRatingsTags = [];
+
+function openGMRatingsModal(pid){
+  const p = gmDb.roster.find(r=>r.id===pid);
+  if(!p) return;
+  document.getElementById('gm-ratings-title').textContent = `${p.name} — Ratings`;
+  document.getElementById('gm-ratings-pid').value = pid;
+  document.getElementById('gm-ratings-note').value = p.scoutNote||'';
+  gmEditingRatingsTags = [...(p.tags||[])];
+
+  // Tags
+  document.querySelectorAll('#gm-tags-grid .tag-pill').forEach(btn=>{
+    const t = btn.dataset.tag;
+    btn.classList.toggle('sel', gmEditingRatingsTags.includes(t));
+  });
+
+  // Sliders
+  const r = gmPlayerRatings(p);
+  let slidersHTML = '';
+  RATING_DEFS.forEach(({key,label})=>{
+    const val = r[key]||5;
+    slidersHTML += `<div class="rating-row">
+      <span class="rating-lbl">${label}</span>
+      <input type="range" class="rating-slider" min="1" max="10" value="${val}" id="rating-${key}" oninput="document.getElementById('rval-${key}').textContent=this.value">
+      <span class="rating-val" id="rval-${key}">${val}</span>
+    </div>`;
+  });
+  document.getElementById('gm-ratings-sliders').innerHTML = slidersHTML;
+  openModal('modal-gm-ratings');
+}
+
+function toggleGMTag(btn, tag){
+  btn.classList.toggle('sel');
+  if(gmEditingRatingsTags.includes(tag)){
+    gmEditingRatingsTags = gmEditingRatingsTags.filter(t=>t!==tag);
+  } else {
+    gmEditingRatingsTags.push(tag);
+  }
+}
+
+function saveGMRatings(){
+  const pid = document.getElementById('gm-ratings-pid').value;
+  const p = gmDb.roster.find(r=>r.id===pid);
+  if(!p) return;
+  p.scoutNote = (document.getElementById('gm-ratings-note').value||'').trim();
+  p.tags = [...gmEditingRatingsTags];
+  p.ratings = {};
+  RATING_DEFS.forEach(({key})=>{
+    const el = document.getElementById('rating-'+key);
+    p.ratings[key] = el ? parseInt(el.value)||5 : 5;
+  });
+  saveGM();
+  closeModal('modal-gm-ratings');
+  renderGMStrategy();
+  toast(`${p.name} updated!`);
+}
+
+// ── Shared field helpers ──
+function gmStratClearAllPos(){
+  if(!confirm('Clear all field assignments?')) return;
+  gmDb.strategy.positionPlan={};
+  saveGM(); renderGMStrategy();
+}
+function gmStratClearLineup(){
+  if(!confirm('Clear batting order?')) return;
+  gmDb.strategy.lineupPlan=[];
+  gmLabSelectedPid=null;
+  saveGM(); renderGMStrategy();
+}
+
+// ─── NOTES ───────────────────────────────────────────────────────────────────
+
+function renderNotes(el){
+  if(!el) el = document.getElementById('statsContent');
+  const notes = db.notes || [];
+  let html = `<div style="display:flex;gap:8px;margin-bottom:12px">
+    <textarea class="finput" id="new-note-input" rows="2" placeholder="Add a note… (game thoughts, tips, reminders)" maxlength="300" style="flex:1;resize:none;font-size:14px;padding:10px 12px"></textarea>
+    <button class="btn btn-g" style="align-self:stretch;padding:0 18px" onclick="addPersonalNote()">Add</button>
+  </div>`;
+  if(!notes.length){
+    html += `<div class="empty"><div class="empty-ico">📝</div><h3>No notes yet</h3><p>Jot down tips, game thoughts, or anything you want to remember.</p></div>`;
+  } else {
+    const sorted = [...notes].sort((a,b)=>b.createdAt-a.createdAt);
+    html += `<div style="display:flex;flex-direction:column;gap:8px">`;
+    sorted.forEach(n=>{
+      const team = n.teamId ? db.teams.find(t=>t.id===n.teamId) : null;
+      const d = new Date(n.createdAt);
+      const dateLbl = d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      html += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div style="flex:1">
+            <div style="font-size:14px;color:var(--text);line-height:1.5;white-space:pre-wrap">${n.text.replace(/</g,'&lt;')}</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:6px;font-weight:600">${dateLbl}${team?' · '+team.name:''}</div>
+          </div>
+          <button onclick="deletePersonalNote('${n.id}')" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0 2px;flex-shrink:0;-webkit-tap-highlight-color:transparent">×</button>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+  el.innerHTML = html;
+}
+
+function addPersonalNote(){
+  const text = (document.getElementById('new-note-input').value||'').trim();
+  if(!text){ toast('Write something first'); return; }
+  if(!db.notes) db.notes = [];
+  const teamId = db.activeGameId ? (db.games.find(g=>g.id===db.activeGameId)||{}).teamId : null;
+  db.notes.push({id:uid(), text, teamId, createdAt:Date.now()});
+  save(db);
+  toast('Note saved!');
+  renderNotes();
+}
+
+function deletePersonalNote(id){
+  if(!db.notes) return;
+  db.notes = db.notes.filter(n=>n.id!==id);
+  save(db);
+  renderNotes();
 }
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
