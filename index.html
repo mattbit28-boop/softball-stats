@@ -178,6 +178,10 @@
     .dpill.sel-runners-none{border-color:var(--muted);background:rgba(78,80,104,.2);color:var(--text2)}
     .dpill.sel-runners-on{border-color:var(--blue);background:rgba(129,140,248,.12);color:var(--blue)}
     .dpill.sel-runners-risp{border-color:var(--am);background:var(--aml);color:var(--am)}
+    .dpill.sel-scored-no{border-color:var(--muted);background:rgba(78,80,104,.2);color:var(--text2)}
+    .dpill.sel-scored-yes{border-color:var(--g);background:var(--gl);color:var(--g)}
+    .dpill.sel-fdp-yes{border-color:var(--am);background:var(--aml);color:var(--am)}
+    .dpill.sel-fzone{border-color:var(--blue);background:rgba(129,140,248,.12);color:var(--blue)}
     /* Stat highlight */
     .stat-up{color:var(--g)}
     .stat-warn{color:var(--am)}
@@ -196,6 +200,8 @@
     .dchip-fball{background:rgba(167,139,250,.15);color:var(--pur)}
     .dchip-fdiff{background:rgba(74,222,128,.15);color:var(--g)}
     .dchip-ftype{background:rgba(248,113,113,.15);color:var(--red)}
+    .dchip-fzone{background:rgba(129,140,248,.15);color:var(--blue)}
+    .dchip-fdp{background:rgba(251,191,36,.15);color:var(--am)}
     .psub-inline{font-size:12px;font-weight:500;color:var(--text2)}
     /* AB Profile bars */
     .prow{display:flex;align-items:center;gap:6px;margin-bottom:6px}
@@ -372,9 +378,12 @@
         <div class="rbipick" id="rbi-picker"></div>
       </div>
       <div class="divider"></div>
-      <div class="togrow">
-        <span class="toglbl">I Scored a Run</span>
-        <button class="tog" id="tog-scored" onclick="toggleScored()"></button>
+      <div class="drow" style="margin-bottom:0">
+        <div class="drow-lbl">Did You Score?</div>
+        <div class="dpicks" id="scored-picks">
+          <button class="dpill sel-scored-no" onclick="selScored(false,this)"><span class="dico">✗</span>No</button>
+          <button class="dpill" onclick="selScored(true,this)"><span class="dico">✓</span>Yes, I Scored</button>
+        </div>
       </div>
     </div>
     <div class="detail-sep">
@@ -437,12 +446,27 @@
         <button class="dpill" onclick="selFD('fball','pu',this)"><span class="dico">↑</span>PU</button>
       </div>
     </div>
+    <div class="drow">
+      <div class="drow-lbl">Play Zone</div>
+      <div class="dpicks">
+        <button class="dpill" onclick="selFD('fzone','left',this)"><span class="dico">◀</span>Left</button>
+        <button class="dpill" onclick="selFD('fzone','middle',this)"><span class="dico">▲</span>Middle</button>
+        <button class="dpill" onclick="selFD('fzone','right',this)"><span class="dico">▶</span>Right</button>
+      </div>
+    </div>
     <div class="drow" id="field-diff-row">
       <div class="drow-lbl">Difficulty</div>
       <div class="dpicks">
         <button class="dpill" onclick="selFD('fdiff','routine',this)"><span class="dico">✓</span>Routine</button>
         <button class="dpill" onclick="selFD('fdiff','tough',this)"><span class="dico">💪</span>Tough</button>
         <button class="dpill" onclick="selFD('fdiff','webgem',this)"><span class="dico">⭐</span>Web Gem</button>
+      </div>
+    </div>
+    <div class="drow" id="field-dp-row">
+      <div class="drow-lbl">Double Play?</div>
+      <div class="dpicks" id="fdp-picks">
+        <button class="dpill sel-scored-no" onclick="selFDP(false,this)"><span class="dico">✗</span>No</button>
+        <button class="dpill" onclick="selFDP(true,this)"><span class="dico">✓</span>Yes — Turned Two</button>
       </div>
     </div>
     <div class="drow" id="field-etype-row" style="display:none">
@@ -703,9 +727,10 @@ function renderLog(){
 
     <div class="psec">
       <div class="psec-title">Fielding</div>
-      <div class="pg pg3">
+      <div class="pg pg4" style="margin-bottom:8px">
         <button class="pb fgood" onclick="logField('PO')"><div class="pb-lbl">PO</div><div class="pb-dsc">Putout</div></button>
         <button class="pb fgood" onclick="logField('A')"><div class="pb-lbl">A</div><div class="pb-dsc">Assist</div></button>
+        <button class="pb fgood" onclick="logField('OFA')"><div class="pb-lbl">OFA</div><div class="pb-dsc">OF Assist</div></button>
         <button class="pb fbad" onclick="logField('E')"><div class="pb-lbl">E</div><div class="pb-dsc">Error</div></button>
       </div>
     </div>`;
@@ -757,13 +782,16 @@ function renderEventEntry(ev, idx, gameId){
     </div>`;
   }
   if(ev.type==='field'){
-    const cls = ev.play==='E'?'be':'bf';
+    const cls = ev.play==='E'?'be':ev.play==='OFA'?'bh':'bf';
     const FBALL_LBL = {gb:'↘ GB', ld:'→ LD', fb:'↗ FB', pu:'↑ PU'};
+    const FZONE_LBL = {left:'◀ Left', middle:'▲ Mid', right:'▶ Right'};
     const FDIFF_LBL = {routine:'✓ Routine', tough:'💪 Tough', webgem:'⭐ Web Gem'};
     const FTYPE_LBL = {bobble:'👋 Bobble', badthrow:'🎯 Bad Throw', lostit:'🌞 Lost It', drop:'✗ Drop'};
     const fchips = [];
     if(ev.fball) fchips.push(`<span class="dchip dchip-fball">${FBALL_LBL[ev.fball]||ev.fball}</span>`);
+    if(ev.fzone) fchips.push(`<span class="dchip dchip-fzone">${FZONE_LBL[ev.fzone]||ev.fzone}</span>`);
     if(ev.fdiff) fchips.push(`<span class="dchip dchip-fdiff">${FDIFF_LBL[ev.fdiff]||ev.fdiff}</span>`);
+    if(ev.fdp)   fchips.push(`<span class="dchip dchip-fdp">⚡ DP</span>`);
     if(ev.ftype) fchips.push(`<span class="dchip dchip-ftype">${FTYPE_LBL[ev.ftype]||ev.ftype}</span>`);
     return `<div class="pentry">
       <div class="pbadge ${cls}">${ev.play}</div>
@@ -787,7 +815,7 @@ function batLabel(r){
   return m[r]||r;
 }
 function fieldLabel(p){
-  return p==='PO'?'Putout':p==='A'?'Assist':'Error';
+  return {PO:'Putout', A:'Assist', OFA:'OF Assist', E:'Error'}[p]||p;
 }
 
 function logBat(result){
@@ -810,7 +838,9 @@ function logBat(result){
       html += `<button class="rbib${i===0?' sel':''}" onclick="selectRBI(${i})">${i}</button>`;
     }
     document.getElementById('rbi-picker').innerHTML = html;
-    document.getElementById('tog-scored').classList.remove('on');
+    // Reset scored to No
+    document.querySelectorAll('#scored-picks .dpill').forEach(b=>b.className='dpill');
+    document.querySelector('#scored-picks .dpill').classList.add('sel-scored-no');
   }
   // Smart detail rows: outs only show pitch quality
   const showContact = !isOut;
@@ -830,9 +860,16 @@ function selectRBI(n){
   });
 }
 
-function toggleScored(){
-  batScored = !batScored;
-  document.getElementById('tog-scored').classList.toggle('on', batScored);
+function selScored(val, btn){
+  batScored = val;
+  document.querySelectorAll('#scored-picks .dpill').forEach(b=>b.className='dpill');
+  btn.classList.add(val ? 'sel-scored-yes' : 'sel-scored-no');
+}
+
+function selFDP(val, btn){
+  fieldDetails.fdp = val;
+  document.querySelectorAll('#fdp-picks .dpill').forEach(b=>b.className='dpill');
+  btn.classList.add(val ? 'sel-fdp-yes' : 'sel-scored-no');
 }
 
 function selRunners(val, btn){
@@ -871,20 +908,20 @@ function confirmBat(){
 function logField(play){
   if(!db.activeGameId) return;
   pendingField = play;
-  fieldDetails = {fball:null, fdiff:null, ftype:null};
+  fieldDetails = {fball:null, fzone:null, fdiff:null, ftype:null, fdp:false};
   document.getElementById('field-modal-title').textContent = fieldLabel(play);
-  // Show difficulty row for PO/A, error type row for E
-  document.getElementById('field-diff-row').style.display = play==='E' ? 'none' : 'block';
-  document.getElementById('field-etype-row').style.display = play==='E' ? 'block' : 'none';
-  // Clear all field detail pill selections
-  document.querySelectorAll('#modal-field .dpill').forEach(b=>{
-    b.className='dpill';
-  });
+  const isError = play==='E';
+  document.getElementById('field-diff-row').style.display = isError ? 'none' : 'block';
+  document.getElementById('field-dp-row').style.display  = isError ? 'none' : 'block';
+  document.getElementById('field-etype-row').style.display = isError ? 'block' : 'none';
+  // Clear all pills and reset DP to No
+  document.querySelectorAll('#modal-field .dpill').forEach(b=>{ b.className='dpill'; });
+  document.querySelector('#fdp-picks .dpill').classList.add('sel-scored-no');
   openModal('modal-field');
 }
 
 function selFD(group, val, btn){
-  const cls = {fball:'sel-fball', fdiff:'sel-fdiff', ftype:'sel-ftype'}[group];
+  const cls = {fball:'sel-fball', fzone:'sel-fzone', fdiff:'sel-fdiff', ftype:'sel-ftype'}[group];
   btn.closest('.dpicks').querySelectorAll('.dpill').forEach(b=>b.classList.remove(cls));
   if(fieldDetails[group]===val){
     fieldDetails[group]=null;
@@ -1229,15 +1266,28 @@ function renderStats(tab){
     const frows = [{label:'All',data:s}, ...db.teams.map(t=>({label:t.name,data:teamStats(t.id,yearGames)}))];
     html += `<div class="card"><div class="card-title">Fielding Stats</div>
       <table class="stbl">
-        <thead><tr><th>Team</th><th>G</th><th>PO</th><th>A</th><th>E</th><th>FPCT</th><th>RF/G</th></tr></thead>
+        <thead><tr><th>Team</th><th>G</th><th>PO</th><th>A</th><th>OFA</th><th>DP</th><th>E</th><th>FPCT</th><th>RF/G</th></tr></thead>
         <tbody>`;
     frows.forEach(({label,data:rs})=>{
       if(rs.g===0&&label!=='All') return;
       const rf = rs.g>0?((rs.po+rs.a)/rs.g).toFixed(1):'—';
-      html += `<tr><td>${label}</td><td>${rs.g}</td><td>${rs.po}</td><td>${rs.a}</td><td${rs.e>0?' class="stat-bad"':''}>${rs.e}</td><td class="hi">${fpctFmt(rs.po,rs.a,rs.e)}</td><td>${rf}</td></tr>`;
+      html += `<tr><td>${label}</td><td>${rs.g}</td><td>${rs.po}</td><td>${rs.a}</td><td${rs.ofa>0?' class="hi"':''}>${rs.ofa}</td><td${rs.dp>0?' style="color:var(--am)"':''}>${rs.dp}</td><td${rs.e>0?' class="stat-bad"':''}>${rs.e}</td><td class="hi">${fpctFmt(rs.po,rs.a,rs.e)}</td><td>${rf}</td></tr>`;
     });
     html += `</tbody></table></div>`;
 
+    // Zone breakdown
+    const allFieldEvs = yearGames.flatMap(g=>g.events.filter(e=>e.type==='field'));
+    const zoneLeft   = allFieldEvs.filter(e=>e.fzone==='left').length;
+    const zoneMid    = allFieldEvs.filter(e=>e.fzone==='middle').length;
+    const zoneRight  = allFieldEvs.filter(e=>e.fzone==='right').length;
+    const zoneTotal  = zoneLeft+zoneMid+zoneRight;
+    if(zoneTotal>0){
+      html += `<div class="card"><div class="card-title">Play Zone (${zoneTotal} tagged)</div>
+        ${pctBar(zoneLeft,zoneTotal,'var(--blue)','◀ Left Side')}
+        ${pctBar(zoneMid,zoneTotal,'var(--g)','▲ Middle')}
+        ${pctBar(zoneRight,zoneTotal,'var(--pur)','▶ Right Side')}
+      </div>`;
+    }
     const fp = calcFieldProfile(yearGames);
     if(fp.fball.total>0||fp.fdiff.total>0||fp.ftype.total>0){
       html += `<div class="card"><div class="card-title">Fielding Profile</div>`;
@@ -1426,7 +1476,7 @@ function openGameDetail(id){
 // ─── STATS CALC ──────────────────────────────────────────────────────────────
 
 function gameStats(game){
-  let ab=0,h=0,d=0,t=0,hr=0,rbi=0,r=0,bb=0,k=0,go=0,fo=0,lo=0,hbp=0,sf=0,po=0,a=0,e=0;
+  let ab=0,h=0,d=0,t=0,hr=0,rbi=0,r=0,bb=0,k=0,go=0,fo=0,lo=0,hbp=0,sf=0,po=0,a=0,e=0,ofa=0,dp=0;
   let rrisp_ab=0,rrisp_h=0,rrisp_rbi=0;
   game.events.forEach(ev=>{
     if(ev.type==='bat'){
@@ -1453,12 +1503,14 @@ function gameStats(game){
     }
     if(ev.type==='field'){
       if(ev.play==='PO') po++;
-      if(ev.play==='A') a++;
+      if(ev.play==='A' || ev.play==='OFA') a++;
+      if(ev.play==='OFA') ofa++;
       if(ev.play==='E') e++;
+      if(ev.fdp) dp++;
     }
   });
   const pa = ab+bb+hbp+sf;
-  return {ab,h,d,t,hr,rbi,r,bb,k,go,fo,lo,hbp,sf,po,a,e,pa,rrisp_ab,rrisp_h,rrisp_rbi,g:1};
+  return {ab,h,d,t,hr,rbi,r,bb,k,go,fo,lo,hbp,sf,po,a,e,ofa,dp,pa,rrisp_ab,rrisp_h,rrisp_rbi,g:1};
 }
 
 function teamStats(teamId, srcGames){
@@ -1471,17 +1523,17 @@ function allStats(srcGames){
 }
 
 function mergeStats(games){
-  let ab=0,h=0,d=0,t=0,hr=0,rbi=0,r=0,bb=0,k=0,go=0,fo=0,lo=0,hbp=0,sf=0,po=0,a=0,e=0,g=0;
+  let ab=0,h=0,d=0,t=0,hr=0,rbi=0,r=0,bb=0,k=0,go=0,fo=0,lo=0,hbp=0,sf=0,po=0,a=0,e=0,ofa=0,dp=0,g=0;
   let rrisp_ab=0,rrisp_h=0,rrisp_rbi=0;
   games.forEach(game=>{
     const gs = gameStats(game);
     ab+=gs.ab;h+=gs.h;d+=gs.d;t+=gs.t;hr+=gs.hr;
     rbi+=gs.rbi;r+=gs.r;bb+=gs.bb;k+=gs.k;go+=gs.go;fo+=gs.fo;lo+=gs.lo;
-    hbp+=gs.hbp;sf+=gs.sf;po+=gs.po;a+=gs.a;e+=gs.e;g++;
+    hbp+=gs.hbp;sf+=gs.sf;po+=gs.po;a+=gs.a;e+=gs.e;ofa+=gs.ofa;dp+=gs.dp;g++;
     rrisp_ab+=gs.rrisp_ab;rrisp_h+=gs.rrisp_h;rrisp_rbi+=gs.rrisp_rbi;
   });
   const pa=ab+bb+hbp+sf;
-  return {g,ab,h,d,t,hr,rbi,r,bb,k,go,fo,lo,hbp,sf,po,a,e,pa,rrisp_ab,rrisp_h,rrisp_rbi};
+  return {g,ab,h,d,t,hr,rbi,r,bb,k,go,fo,lo,hbp,sf,po,a,e,ofa,dp,pa,rrisp_ab,rrisp_h,rrisp_rbi};
 }
 
 // ─── STREAKS & EXPORT ────────────────────────────────────────────────────────
