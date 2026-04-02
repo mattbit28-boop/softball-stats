@@ -2216,12 +2216,28 @@ function getScoreTotals(game){
   };
 }
 
+function endPersonalG1(){
+  const game = db.games.find(g=>g.id===db.activeGameId);
+  if(!game) return;
+  if(!confirm('End Game 1 and start Game 2?\n\nG1 score locked. Game stays open for G2.')) return;
+  if(!game.innings) game.innings = [{us:0,them:0}];
+  // Mark current last inning as G1 end, push G2 start marker
+  game.innings.push({us:0, them:0, _g2start:true});
+  save(db);
+  toast('G1 final! G2 starting 🥎');
+  renderLog();
+  renderHome();
+}
+
 function adjScore(team, delta){
   const game = db.games.find(g=>g.id===db.activeGameId);
   if(!game) return;
   if(!game.innings) game.innings = [{us:0,them:0}];
+  // Only adjust the last real (non-marker) inning
   const cur = game.innings[game.innings.length-1];
-  cur[team] = Math.max(0, (cur[team]||0) + delta);
+  if(cur._g2start){ game.innings.push({us:0,them:0}); }
+  const active = game.innings[game.innings.length-1];
+  active[team] = Math.max(0, (active[team]||0) + delta);
   save(db);
   renderLog();
   renderHome();
@@ -2242,21 +2258,41 @@ function nextInning(){
 function renderScoreCard(game, team){
   if(!game.innings || game.innings.length === 0) return '';
   const innings = game.innings;
-  const totals = getScoreTotals(game);
-  const cur = innings[innings.length-1];
-  const inningNum = innings.length;
-  const usWin = totals.us > totals.them;
-  const themWin = totals.them > totals.us;
   const oppName = game.opponent || 'Them';
 
-  let innHeaders = innings.map((_,i)=>`<th>${i+1}</th>`).join('');
-  let usRow      = innings.map(i=>`<td>${i.us}</td>`).join('');
-  let themRow    = innings.map(i=>`<td>${i.them}</td>`).join('');
+  // Split G1 / G2
+  const g2StartIdx = innings.findIndex(i=>i._g2start);
+  const g2Active   = g2StartIdx >= 0;
+  const g1Innings  = g2Active ? innings.slice(0, g2StartIdx) : innings;
+  const g2Innings  = g2Active ? innings.slice(g2StartIdx)    : [];
+  const activeInnings = g2Active ? g2Innings : g1Innings;
+  const g1Score = {us:g1Innings.reduce((s,i)=>s+(i.us||0),0), them:g1Innings.reduce((s,i)=>s+(i.them||0),0)};
+  const g2Score = {us:g2Innings.reduce((s,i)=>s+(i.us||0),0), them:g2Innings.reduce((s,i)=>s+(i.them||0),0)};
+  const totals  = g2Active ? g2Score : g1Score;
+
+  const cur = activeInnings[activeInnings.length-1] || {us:0,them:0};
+  const inningNum = activeInnings.length;
+  const usWin = totals.us > totals.them;
+  const themWin = totals.them > totals.us;
+
+  let innHeaders = activeInnings.map((_,i)=>`<th>${i+1}</th>`).join('');
+  let usRow      = activeInnings.map(i=>`<td>${i.us||0}</td>`).join('');
+  let themRow    = activeInnings.map(i=>`<td>${i.them||0}</td>`).join('');
+
+  let g1Banner = '';
+  if(g2Active){
+    g1Banner = `<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:9px;margin-bottom:8px">
+      <span style="font-size:11px;font-weight:700;color:var(--text2)">G1 Final</span>
+      <span style="font-size:15px;font-weight:900;color:${g1Score.us>g1Score.them?'var(--g)':g1Score.them>g1Score.us?'var(--red)':'var(--text)'}">${g1Score.us} – ${g1Score.them}</span>
+      <span style="font-size:11px;font-weight:700;color:var(--am)">▸ G2</span>
+    </div>`;
+  }
 
   return `
+  ${g1Banner}
   <div class="scard">
     <div class="scard-top">
-      <div class="scard-vs">Scoreboard · Inning ${inningNum}</div>
+      <div class="scard-vs">${g2Active?'G2 · ':''}Scoreboard · Inning ${inningNum}</div>
       <button class="scard-toggle" onclick="toggleBoxScore(this)">Box Score ▾</button>
     </div>
     <div class="scard-main">
@@ -2265,7 +2301,7 @@ function renderScoreCard(game, team){
         <div class="scard-num${usWin?' win':''}">${totals.us}</div>
       </div>
       <div class="scard-mid">
-        <div class="scard-inn-lbl">INN ${inningNum}</div>
+        <div class="scard-inn-lbl">${g2Active?'G2 · ':''}INN ${inningNum}</div>
         <div class="scard-sep">–</div>
       </div>
       <div class="scard-side">
@@ -2282,10 +2318,11 @@ function renderScoreCard(game, team){
       <button class="scard-next-btn" onclick="nextInning()">End INN ${inningNum} ▶</button>
       <div class="scard-btns">
         <button class="scard-adj" onclick="adjScore('them',-1)">−</button>
-        <span class="scard-cur">${cur.them}</span>
+        <span class="scard-cur">${cur.them||0}</span>
         <button class="scard-adj" onclick="adjScore('them',1)">+</button>
       </div>
     </div>
+    ${!g2Active?`<div style="margin-top:8px"><button class="scard-next-btn" style="width:100%;background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.3);color:var(--am)" onclick="endPersonalG1()">End G1 / Start G2 →</button></div>`:''}
     <div class="bbox" id="boxscore-wrap" style="display:none">
       <table class="bbox-tbl">
         <thead><tr><th>Team</th>${innHeaders}<th>R</th></tr></thead>
@@ -2694,18 +2731,34 @@ function gmDeriveState(game){
         bases = {first:null, second:null, third:null};
         while(innings.length < inning) innings.push({us:0,them:0});
       }
+    } else if(ev.type === 'dh_break'){
+      // End of G1 — mark break index and reset state for G2
+      // innings up to here = G1, new innings after = G2
+      ev._g1InningCount = innings.length;
+      inning = 1;
+      outs = 0;
+      bases = {first:null, second:null, third:null};
+      innings.push({us:0, them:0, _g2start:true});
     }
   }
 
   // Ensure current inning row exists
   while(innings.length < inning) innings.push({us:0,them:0});
 
+  // Split G1 / G2 innings
+  const g2StartIdx = innings.findIndex(i=>i._g2start);
+  const g2Active   = g2StartIdx >= 0;
+  const g1Innings  = g2Active ? innings.slice(0, g2StartIdx) : innings;
+  const g2Innings  = g2Active ? innings.slice(g2StartIdx)    : [];
+  const g1Score    = {us:g1Innings.reduce((s,i)=>s+(i.us||0),0), them:g1Innings.reduce((s,i)=>s+(i.them||0),0)};
+  const g2Score    = {us:g2Innings.reduce((s,i)=>s+(i.us||0),0), them:g2Innings.reduce((s,i)=>s+(i.them||0),0)};
+
   const score = {
     us: innings.reduce((s,i)=>s+(i.us||0),0),
     them: innings.reduce((s,i)=>s+(i.them||0),0)
   };
 
-  return {inning, outs, bases, innings, score, hrCount, nextBatterIdx, atBatCount};
+  return {inning, outs, bases, innings, score, hrCount, nextBatterIdx, atBatCount, g2Active, g1Innings, g2Innings, g1Score, g2Score};
 }
 
 // ─── ENGINE: DEFAULT RUNNERS ─────────────────────────────────────────────────
@@ -3179,20 +3232,33 @@ function renderGMBook(el){
     return parts[parts.length-1].slice(0,5);
   };
 
-  let html = `
+  // G1 final banner (if DH break has happened)
+  let html = '';
+  if(st.g2Active){
+    const g1us = st.g1Score.us, g1them = st.g1Score.them;
+    html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:11px;margin-bottom:8px">
+      <span style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">G1 Final</span>
+      <span style="font-size:16px;font-weight:900;color:${g1us>g1them?'var(--g)':g1them>g1us?'var(--red)':'var(--text)'}">${g1us}</span>
+      <span style="font-size:12px;color:var(--muted)">–</span>
+      <span style="font-size:16px;font-weight:900;color:${g1them>g1us?'var(--g)':g1us>g1them?'var(--red)':'var(--text)'}">${g1them}</span>
+      <span style="font-size:11px;font-weight:700;color:var(--am)">▸ G2 Active</span>
+    </div>`;
+  }
+
+  html += `
     <div class="gm-scoreline">
       <div class="gm-score-side">
-        <div class="gm-score-name">Goldies</div>
-        <div class="gm-score-num${usLead?' lead':''}">${totals.us}</div>
+        <div class="gm-score-name">Goldies${st.g2Active?' G2':''}</div>
+        <div class="gm-score-num${usLead?' lead':''}">${st.g2Active?st.g2Score.us:totals.us}</div>
       </div>
       <div class="gm-score-mid">
-        <div class="gm-inn-lbl">INN ${st.inning}</div>
+        <div class="gm-inn-lbl">${st.g2Active?'G2 · ':''}INN ${st.inning}</div>
         <div style="font-size:18px;font-weight:900;color:rgba(255,255,255,.2)">–</div>
         <div style="margin-top:4px">${[0,1,2].map(i=>`<span class="gout${i<st.outs?' on':''}"></span>`).join('')}</div>
       </div>
       <div class="gm-score-side">
-        <div class="gm-score-name">${ag.opponent||'Opponent'}</div>
-        <div class="gm-score-num${totals.them>totals.us?' lead':''}">${totals.them}</div>
+        <div class="gm-score-name">${ag.opponent||'Opponent'}${st.g2Active?' G2':''}</div>
+        <div class="gm-score-num${(st.g2Active?st.g2Score.them:totals.them)>(st.g2Active?st.g2Score.us:totals.us)?' lead':''}">${st.g2Active?st.g2Score.them:totals.them}</div>
       </div>
     </div>
 
@@ -3247,6 +3313,7 @@ function renderGMBook(el){
     </div>
     <div style="display:flex;gap:8px;margin-top:6px;margin-bottom:6px">
       <button class="btn btn-ghost" style="flex:1" onclick="openGMInningEnd()">End Inning →</button>
+      ${!st.g2Active?`<button class="btn btn-ghost" style="flex:1;border-color:rgba(251,191,36,.35);color:var(--am)" onclick="gmStartG2()">End G1 / G2 →</button>`:''}
     </div>`;
 
   // Defensive plays section
@@ -3525,6 +3592,19 @@ function gmConfirmInningEnd(){
   saveGM();
   const newSt = gmDeriveState(ag);
   toast(`Inning ${newSt.inning} — let's go!`);
+  renderGMBook(document.getElementById('gmContent'));
+}
+
+function gmStartG2(){
+  const ag = gmDb.activeGameId ? gmDb.games.find(g=>g.id===gmDb.activeGameId) : null;
+  if(!ag) return;
+  const st = gmDeriveState(ag);
+  if(st.g2Active){ toast('G2 already started'); return; }
+  if(!confirm('End Game 1 and start Game 2?\n\nG1 score will be saved. The game stays open for G2.')) return;
+  // Close out current inning first if needed
+  ag.events.push({id:uid(), type:'dh_break', ts:Date.now()});
+  saveGM();
+  toast('G1 final! Starting Game 2 🥎');
   renderGMBook(document.getElementById('gmContent'));
 }
 
