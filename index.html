@@ -1956,22 +1956,41 @@ function parseICSDate(s){
 
 function extractOpponent(summary, teamName){
   const s = (summary || '').trim();
-  // "Team A vs. Team B" or "Team A @ Team B" or "vs Team B"
-  const vsMatch = s.match(/\bvs\.?\s+(.+)/i);
-  if(vsMatch) return vsMatch[1].replace(/\s*@.*/,'').trim();
-  const atMatch = s.match(/\s@\s*(.+)/);
-  if(atMatch) return atMatch[1].trim();
-  if(teamName && s.toLowerCase().includes(teamName.toLowerCase())){
-    return s.replace(new RegExp(teamName, 'gi'), '').replace(/\bvs\.?/gi,'').replace(/\bat\b/gi,'').replace(/[–\-]/g,'').trim();
+  if(!s) return '';
+  // Handle "Team A vs. Team B" or "Team A vs Team B" (TeamSideline format)
+  const vsParts = s.split(/\s+vs\.?\s+/i);
+  if(vsParts.length === 2){
+    const a = vsParts[0].trim();
+    const b = vsParts[1].trim();
+    if(teamName){
+      const tn = teamName.toLowerCase();
+      // "Opponent vs. Our Team" → opponent is A
+      if(b.toLowerCase().includes(tn) || tn.includes(b.toLowerCase())) return a;
+      // "Our Team vs. Opponent" → opponent is B
+      if(a.toLowerCase().includes(tn) || tn.includes(a.toLowerCase())) return b;
+    }
+    return b; // default: right-side is opponent
   }
-  return s;
+  return s.replace(/\s*@\s*.*/,'').trim();
 }
 
 function getUpcomingGames(teamId){
   const team = db.teams.find(t=>t.id===teamId);
   if(!team || !team.calendar) return [];
-  const now = Date.now() - 3600000 * 3; // include games started up to 3 hrs ago
-  return (team.calendar.events || []).filter(e=>e.start >= now);
+  const now = Date.now() - 3600000 * 3;
+  const events = (team.calendar.events || []).filter(e=>e.start >= now);
+  // Deduplicate: TeamSideline lists both "A vs B" and "B vs A" for same game night.
+  // Keep only the first entry per calendar-date per opponent pair.
+  const seen = new Set();
+  return events.filter(ev=>{
+    const d = new Date(ev.start);
+    const dateKey = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    const opp = extractOpponent(ev.summary||'', team.name);
+    const key = `${dateKey}|${opp.toLowerCase()}`;
+    if(seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function openCalendarModal(teamId){
@@ -2081,19 +2100,23 @@ function renderUpcomingSuggestions(teamId){
   const upcoming = getUpcomingGames(teamId);
   if(!upcoming.length) return '';
   const team = db.teams.find(t=>t.id===teamId);
-  const show = upcoming.slice(0,3);
+  const show = upcoming.slice(0,4);
   return `<div class="fgrp">
-    <label class="flbl">Upcoming Scheduled Games</label>
+    <label class="flbl">📅 Upcoming Scheduled Games</label>
     ${show.map(ev=>{
       const d = new Date(ev.start);
       const today = new Date();
+      const tomorrow = new Date(today); tomorrow.setDate(today.getDate()+1);
       const isToday = d.toDateString()===today.toDateString();
-      const dateLbl = isToday ? 'TODAY' : `${d.getMonth()+1}/${d.getDate()}`;
+      const isTomorrow = d.toDateString()===tomorrow.toDateString();
+      const dateLbl = isToday ? 'TODAY' : isTomorrow ? 'TMRW' : `${d.getMonth()+1}/${d.getDate()}`;
+      const timeLbl = d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
       const opp = extractOpponent(ev.summary||'', team ? team.name : '');
-      return `<div class="upcoming-game" onclick="useScheduledGame('${(opp||ev.summary||'').replace(/'/g,"\\'")}')">
-        <div class="ug-date">${dateLbl}</div>
+      const safeOpp = (opp||ev.summary||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      return `<div class="upcoming-game" onclick="useScheduledGame('${safeOpp}')">
+        <div class="ug-date">${dateLbl}<br><span style="font-size:9px;opacity:.7">${timeLbl}</span></div>
         <div class="ug-info">
-          <div class="ug-title">${ev.summary||'Game'}</div>
+          <div class="ug-title">vs. ${opp||ev.summary}</div>
           ${ev.location?`<div class="ug-loc">📍 ${ev.location}</div>`:''}
         </div>
         <span style="color:var(--g);font-size:11px;font-weight:700;flex-shrink:0">Use →</span>
