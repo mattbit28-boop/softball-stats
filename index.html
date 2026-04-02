@@ -870,7 +870,7 @@
 <script>
 // ─── DATA ─────────────────────────────────────────────────────────────────────
 
-const POSITIONS = ['P','C','1B','2B','3B','SS','LF','CF','RF','SF','DH','UT'];
+const POSITIONS = ['P','C','1B','2B','3B','SS','LF','LC','RC','RF','DH','UT'];
 
 function load(){
   return JSON.parse(localStorage.getItem('ds_data')||'null') || {teams:[],games:[],activeGameId:null,notes:[]};
@@ -3832,10 +3832,10 @@ const POS_FIT = {
   '2B': {great:['2B'],         ok:['SS','3B']},
   '3B': {great:['3B'],         ok:['1B','SS','2B']},
   'SS': {great:['SS'],         ok:['2B','3B']},
-  'LF': {great:['LF','OF'],    ok:['RF','SF','CF']},
-  'CF': {great:['CF','OF'],    ok:['LF','RF','SF']},
-  'RF': {great:['RF','OF'],    ok:['LF','SF','CF']},
-  'SF': {great:['SF','OF'],    ok:['LF','RF','CF']},
+  'LF': {great:['LF','OF'],    ok:['LC','RC','RF']},
+  'LC': {great:['LC','CF','OF'], ok:['LF','RC','RF']},
+  'RC': {great:['RC','CF','OF'], ok:['LC','LF','RF']},
+  'RF': {great:['RF','OF'],    ok:['RC','LC','LF']},
 };
 
 const BATTING_ROLES = ['Leadoff','2-Hole','3-Hole','Cleanup','5th','6th','7th','8th','9th','10th'];
@@ -3861,10 +3861,10 @@ const FIELD_POSITIONS_LAYOUT = [
   {pos:'2B', x:67, y:46},
   {pos:'3B', x:26, y:65},
   {pos:'SS', x:33, y:46},
-  {pos:'LF', x:16, y:26},
-  {pos:'CF', x:50, y:16},
-  {pos:'RF', x:84, y:26},
-  {pos:'SF', x:50, y:36},
+  {pos:'LF', x:14, y:28},
+  {pos:'LC', x:36, y:17},
+  {pos:'RC', x:64, y:17},
+  {pos:'RF', x:86, y:28},
 ];
 
 function getPosFit(playerPos, fieldPos){
@@ -3974,14 +3974,15 @@ function gmLabInsights(){
     insights.push({ico:'🛡',title:'Defensive Notes',items:weakSpots.slice(0,4)});
   }
 
-  // Strongest outfield combo
+  // Strongest outfield combo (LF / LC / RC / RF)
   const ofCandidates = roster.map(p=>{
     const r = gmPlayerRatings(p);
-    return {p, score: r.range*.4 + r.glove*.4 + r.arm*.2};
+    const isNaturalOF = ['LF','LC','RC','RF','OF'].includes(p.position||'');
+    return {p, score: r.range*.4 + r.glove*.35 + r.arm*.15 + (isNaturalOF?.1:0)*10};
   }).sort((a,b)=>b.score-a.score).slice(0,4);
   if(ofCandidates.length>=3){
-    insights.push({ico:'🌿',title:'Strongest Outfield Combo',items:
-      ofCandidates.map(({p,score})=>({text:p.name, detail:`Range ${gmPlayerRatings(p).range} Glove ${gmPlayerRatings(p).glove} Arm ${gmPlayerRatings(p).arm}`, cls:'ins-blue', pill:`${Math.round(score)}/10`}))
+    insights.push({ico:'🌿',title:'Best Outfield 4 (LF·LC·RC·RF)',items:
+      ofCandidates.map(({p,score})=>({text:p.name, detail:`Range ${gmPlayerRatings(p).range} · Glove ${gmPlayerRatings(p).glove} · Arm ${gmPlayerRatings(p).arm}`, cls:'ins-blue', pill:`${Math.round(score)}/10`}))
     });
   }
 
