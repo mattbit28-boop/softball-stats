@@ -410,12 +410,30 @@
     .ppool-stat-lbl{font-size:9px;color:var(--text2);font-weight:600}
     .ppool-tags{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;margin-top:4px;min-height:12px}
     .ptag{font-size:8px;font-weight:700;padding:1px 5px;border-radius:20px}
-    .ptag-lead{background:rgba(74,222,128,.15);color:var(--g)}
-    .ptag-power{background:rgba(248,113,113,.15);color:var(--red)}
-    .ptag-speed{background:rgba(251,191,36,.15);color:var(--am)}
-    .ptag-anchor{background:rgba(167,139,250,.15);color:var(--pur)}
-    .ptag-utility{background:rgba(129,140,248,.15);color:var(--blue)}
-    .ptag-clutch{background:rgba(74,222,128,.15);color:var(--g)}
+    .ptag-leadoff,.ptag-lead{background:rgba(74,222,128,.15);color:var(--g)}
+    .ptag-power,.ptag-cleanup,.ptag-rbi{background:rgba(248,113,113,.15);color:var(--red)}
+    .ptag-speed,.ptag-slapper,.ptag-basestealer{background:rgba(251,191,36,.15);color:var(--am)}
+    .ptag-anchor,.ptag-defensive,.ptag-walldog{background:rgba(167,139,250,.15);color:var(--pur)}
+    .ptag-utility,.ptag-versatile{background:rgba(129,140,248,.15);color:var(--blue)}
+    .ptag-clutch,.ptag-lategame{background:rgba(74,222,128,.2);color:var(--g)}
+    .ptag-contact,.ptag-linedrive,.ptag-tableset{background:rgba(56,189,248,.15);color:#38bdf8}
+    .ptag-veteran,.ptag-captain{background:rgba(253,186,116,.15);color:#fb923c}
+    .ptag-hot{background:rgba(239,68,68,.18);color:#f87171}
+    .ptag-cold{background:rgba(147,197,253,.12);color:#93c5fd}
+    .ptag-smallball,.ptag-bunter{background:rgba(251,191,36,.12);color:#fbbf24}
+    /* Archetype picker grid in modal */
+    .arc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-top:4px}
+    .arc-pill{display:flex;align-items:center;gap:7px;padding:9px 11px;border-radius:11px;border:1.5px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s;text-align:left}
+    .arc-pill.sel{border-color:currentColor;background:rgba(255,255,255,.1)}
+    .arc-pill-ico{font-size:18px;line-height:1;flex-shrink:0}
+    .arc-pill-txt{flex:1;min-width:0}
+    .arc-pill-name{font-size:12px;font-weight:800;display:block;line-height:1.2}
+    .arc-pill-hint{font-size:9px;font-weight:500;opacity:.6;display:block;line-height:1.3;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .arc-g{color:var(--g)} .arc-red{color:var(--red)} .arc-am{color:var(--am)}
+    .arc-pur{color:var(--pur)} .arc-blue{color:#38bdf8} .arc-or{color:#fb923c}
+    /* Roster archetype badges */
+    .arc-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06)}
+    .arc-badge-row{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px}
     .ppool-edit-btn{position:absolute;top:4px;right:4px;background:rgba(255,255,255,.07);border:none;border-radius:5px;color:var(--text2);font-size:9px;font-weight:700;padding:2px 5px;cursor:pointer;-webkit-tap-highlight-color:transparent;line-height:1.4}
     .lab-field-wrap{position:relative;width:100%;max-width:360px;margin:0 auto 16px}
     .lab-field-inner{position:relative;background:linear-gradient(180deg,#0b2a0b 0%,#0f3310 45%,#163d16 100%);border:2px solid rgba(74,222,128,.18);border-radius:18px;overflow:hidden;padding-bottom:112%}
@@ -551,17 +569,9 @@
       <textarea class="finput" id="gm-ratings-note" rows="2" maxlength="200" placeholder="e.g. Best bat on the team, struggles vs. pull-side fielders…" style="resize:none;font-size:14px;padding:10px 12px"></textarea>
     </div>
     <div style="margin-bottom:14px">
-      <div class="flbl" style="margin-bottom:8px">Tags</div>
-      <div class="tag-grid" id="gm-tags-grid">
-        <button class="tag-pill" data-tag="leadoff" onclick="toggleGMTag(this,'leadoff')">⚡ Leadoff</button>
-        <button class="tag-pill" data-tag="power" onclick="toggleGMTag(this,'power')">💪 Power</button>
-        <button class="tag-pill" data-tag="speed" onclick="toggleGMTag(this,'speed')">🏃 Speed</button>
-        <button class="tag-pill" data-tag="anchor" onclick="toggleGMTag(this,'anchor')">⚓ Anchor</button>
-        <button class="tag-pill" data-tag="utility" onclick="toggleGMTag(this,'utility')">🔧 Utility</button>
-        <button class="tag-pill" data-tag="clutch" onclick="toggleGMTag(this,'clutch')">🎯 Clutch</button>
-        <button class="tag-pill" data-tag="veteran" onclick="toggleGMTag(this,'veteran')">🏆 Veteran</button>
-        <button class="tag-pill" data-tag="hot" onclick="toggleGMTag(this,'hot')">🔥 Hot</button>
-        <button class="tag-pill" data-tag="cold" onclick="toggleGMTag(this,'cold')">❄️ Cold</button>
+      <div class="flbl" style="margin-bottom:8px">Archetypes <span style="font-size:10px;font-weight:500;color:var(--text2)">— pick all that fit</span></div>
+      <div class="arc-grid" id="gm-tags-grid">
+        <!-- filled by JS from GM_ARCHETYPES -->
       </div>
     </div>
     <div class="flbl" style="margin-bottom:8px">Ratings (1–10)</div>
@@ -2725,6 +2735,12 @@ let gmPendingRunners = {};   // {playerId: 'scored'|'1B'|'2B'|'3B'|'out'}
 let gmPendingCount = '';
 let gmPendingDetails = {};
 let gmEditingEventIdx = null; // if editing an existing event
+// AB detail state for GM scorebook
+let gmPendingDir     = null;
+let gmPendingTraj    = null;
+let gmPendingContact = null;
+let gmPendingPitch   = null;
+let gmPendingPitches = 0;
 // Lineup builder state
 let gmSelectedLineup = [];
 // Inning end pending runs counter
@@ -3422,21 +3438,37 @@ function renderGMBook(el){
       } else {
         const isHit = ['1B','2B','3B','HR'].includes(ev.result);
         const isWalk = ev.result === 'BB';
-        const isOut = ['K','GO','FO','LO','SF','FC','ROE','CS','HR_OUT'].includes(ev.result);
-        const cls = isHit?'bh':isWalk?'bw':isOut?'bo':'be';
+        const isOutR = ['K','GO','FO','LO','SF','FC','ROE','CS','HR_OUT'].includes(ev.result);
+        const cls = isHit?'bh':isWalk?'bw':isOutR?'bo':'be';
         const ro = ev.runners||{};
         const runs = Object.values(ro).filter(d=>d==='scored').length;
         const extras = [];
-        if(runs>0) extras.push(runs+' RBI');
+        if(runs>0) extras.push(runs===1?'1 RBI':runs+' RBI');
         if(ro[ev.playerId]==='scored') extras.push('Scored');
-        html += `<div class="pentry">
-          <div class="pbadge ${cls}">${ev.result}</div>
-          <div class="flex1">
-            <div class="pmain">${p?p.name:'?'}${extras.length?' · <span class="psub-inline">'+extras.join(' · ')+'</span>':''}</div>
-            <div class="psub">Inn ${ev.inning||'?'}</div>
+        if(ev.count) extras.push(ev.count);
+        // Detail chips
+        const GM_TRAJ_LBL = {gb:'GB',ld:'LD',fb:'FB',pu:'PU'};
+        const GM_DIR_LBL  = {pull:'Pull',center:'Ctr',oppo:'Oppo'};
+        const GM_CON_LBL  = {barrel:'🎯 Barrel',solid:'✓ Solid',weak:'✗ Weak',check:'↩ Check'};
+        const GM_PCH_LBL  = {good:'Good Pitch',bad:'Chased',firstpitch:'1st Pitch',deepcount:'Deep Count'};
+        const chips = [];
+        if(ev.dir)     chips.push(`<span class="dchip">${GM_DIR_LBL[ev.dir]||ev.dir}</span>`);
+        if(ev.traj)    chips.push(`<span class="dchip">${GM_TRAJ_LBL[ev.traj]||ev.traj}</span>`);
+        if(ev.contact) chips.push(`<span class="dchip dchip-contact">${GM_CON_LBL[ev.contact]||ev.contact}</span>`);
+        if(ev.pitch)   chips.push(`<span class="dchip dchip-pitch">${GM_PCH_LBL[ev.pitch]||ev.pitch}</span>`);
+        if(ev.pitches) chips.push(`<span class="dchip dchip-pitch">${ev.pitches}p</span>`);
+        html += `<div class="pentry" style="flex-direction:column;align-items:stretch;padding:8px 10px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="pbadge ${cls}">${ev.result}</div>
+            <div class="flex1">
+              <div class="pmain">${p?p.name:'?'}${extras.length?' · <span class="psub-inline">'+extras.join(' · ')+'</span>':''}</div>
+              <div class="psub">Inn ${ev.inning||'?'}</div>
+            </div>
+            <button class="pundo" onclick="gmEditEvent(${origIdx})" title="Edit">✏</button>
+            <button class="pundo" onclick="gmDeleteEvent(${origIdx})" title="Delete">×</button>
           </div>
-          <button class="pundo" onclick="gmEditEvent(${origIdx})" title="Edit">✏</button>
-          <button class="pundo" onclick="gmDeleteEvent(${origIdx})" title="Delete">×</button>
+          ${chips.length?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;padding-left:2px">${chips.join('')}</div>`:''}
+          ${ev.note?`<div style="font-size:11px;color:var(--text2);margin-top:4px;padding-left:2px;font-style:italic">"${ev.note}"</div>`:''}
         </div>`;
       }
     });
@@ -3469,16 +3501,45 @@ function gmOpenPA(result, editIdx){
     const preSt = gmDeriveState({...ag, events: ag.events.slice(0, gmEditingEventIdx)});
     // Start from defaults then overlay saved runners
     gmPendingRunners = Object.assign({}, gmDefaultRunners(preSt, editEv.result, batterId), editEv.runners||{});
-    gmPendingCount = editEv.count||'';
+    gmPendingCount   = editEv.count||'';
     gmPendingDetails = {...(editEv.details||{})};
+    gmPendingDir     = editEv.dir||null;
+    gmPendingTraj    = editEv.traj||null;
+    gmPendingContact = editEv.contact||null;
+    gmPendingPitch   = editEv.pitch||null;
+    gmPendingPitches = editEv.pitches||0;
   } else {
     gmPendingRunners = gmDefaultRunners(st, result, batterId);
-    gmPendingCount = '';
+    gmPendingCount   = '';
     gmPendingDetails = {};
+    gmPendingDir     = null;
+    gmPendingTraj    = null;
+    gmPendingContact = null;
+    gmPendingPitch   = null;
+    gmPendingPitches = 0;
   }
 
   gmRenderPAModal(ag);
   openModal('modal-gm-pa');
+}
+
+function gmSelPADetail(field, val, btn){
+  if(field==='dir')     gmPendingDir     = (gmPendingDir===val)     ? null : val;
+  if(field==='traj')    gmPendingTraj    = (gmPendingTraj===val)    ? null : val;
+  if(field==='contact') gmPendingContact = (gmPendingContact===val) ? null : val;
+  if(field==='pitch')   gmPendingPitch   = (gmPendingPitch===val)   ? null : val;
+  // Update sibling active states
+  btn.closest('.dpicks').querySelectorAll('.dpill').forEach(b=>b.classList.remove('act'));
+  if(field==='dir'&&gmPendingDir===val||field==='traj'&&gmPendingTraj===val||
+     field==='contact'&&gmPendingContact===val||field==='pitch'&&gmPendingPitch===val){
+    btn.classList.add('act');
+  }
+}
+
+function gmAdjPAPitches(delta){
+  gmPendingPitches = Math.max(0, (gmPendingPitches||0) + delta);
+  const el = document.getElementById('gm-pa-pitch-display');
+  if(el) el.textContent = gmPendingPitches;
 }
 
 function gmRenderPAModal(ag){
@@ -3504,52 +3565,128 @@ function gmRenderPAModal(ag){
     ? gmDeriveState({...ag, events: ag.events.slice(0, gmEditingEventIdx)})
     : st;
 
-  const isSimpleOut = ['K','GO','FO','LO'].includes(result)
-    && !preSt.bases.first && !preSt.bases.second && !preSt.bases.third
-    && gmEditingEventIdx === null;
+  const hasRunners = preSt.bases.first || preSt.bases.second || preSt.bases.third;
+  const isOut = ['K','GO','FO','LO'].includes(result);
 
-  let html = `<h2>${gmResultLabel(result)}</h2>`;
-  if(isSimpleOut){
-    html += `<p style="color:var(--text2);font-size:14px;margin-bottom:16px">Batter: ${batterName}</p>
-      <button class="btn btn-red btn-full btn-lg" onclick="gmConfirmPA()">&#10003; Log Out</button>
-      <button class="btn btn-ghost btn-full" onclick="closeModal('modal-gm-pa')" style="margin-top:8px">Cancel</button>`;
-  } else {
-    html += `<p style="color:var(--text2);font-size:13px;margin-bottom:14px">Batter: <strong>${batterName}</strong></p>`;
+  // Helper: pill button with active state
+  const pill = (field, val, ico, label, selVal) => {
+    const active = selVal===val ? ' act' : '';
+    return `<button class="dpill${active}" onclick="gmSelPADetail('${field}','${val}',this)"><span class="dico">${ico}</span>${label}</button>`;
+  };
 
-    // Build ordered runner list: 3B → 2B → 1B → Batter
+  let html = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <div style="font-size:22px;font-weight:900;line-height:1">${gmResultLabel(result)}</div>
+      <div style="color:var(--text2);font-size:13px;font-weight:500">— ${batterName}</div>
+    </div>`;
+
+  // ── Runner movement (always show if runners or not a simple out) ──────────
+  if(hasRunners || !isOut || gmEditingEventIdx !== null){
     const runnerList = [];
     if(preSt.bases.third)  runnerList.push({pid:preSt.bases.third,  base:'3B'});
     if(preSt.bases.second) runnerList.push({pid:preSt.bases.second, base:'2B'});
     if(preSt.bases.first)  runnerList.push({pid:preSt.bases.first,  base:'1B'});
     runnerList.push({pid: batterId||'_batter', base:'Batter'});
 
-    const destLabel = {scored:'SCORES','3B':'3rd Base','2B':'2nd Base','1B':'1st Base','out':'OUT'};
+    const destLabel = {scored:'SCORES','3B':'3rd','2B':'2nd','1B':'1st','out':'OUT'};
     const destColor = {scored:'var(--g)','3B':'var(--am)','2B':'var(--am)','1B':'var(--am)',out:'var(--red)'};
 
-    html += `<div style="margin-bottom:14px">
-      <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Runner Movement</div>`;
-
-    runnerList.forEach(({pid, base})=>{
-      const rp = gmDb.roster.find(r=>r.id===pid);
-      const rname = (pid===batterId||pid==='_batter') ? 'Batter' : (rp ? rp.name : '?');
-      const curDest = gmPendingRunners[pid] || 'out';
-      const color = destColor[curDest]||'var(--text2)';
-      const safePid = pid.replace(/'/g,"\\'");
-      html += `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
-        <div style="flex:1;font-size:13px;font-weight:700;color:var(--text)">${rname}<span style="color:var(--text2);font-weight:500;font-size:12px"> (${base})</span></div>
-        <div style="font-size:13px;font-weight:800;color:${color};min-width:80px;text-align:right">${destLabel[curDest]||curDest}</div>
-        <button onclick="gmCycleRunnerDest('${safePid}')" style="background:rgba(255,255,255,.08);border:1px solid var(--border2);color:var(--text2);padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap">Change</button>
-      </div>`;
-    });
-
-    html += `</div>
-      <div class="fgrp">
-        <label class="flbl">Count (optional, e.g. 2-2)</label>
-        <input class="finput" id="gm-pa-count" value="${gmPendingCount||''}" placeholder="1-1" maxlength="6" oninput="gmPendingCount=this.value">
-      </div>
-      <button class="btn btn-g btn-full btn-lg" onclick="gmConfirmPA()">Log It</button>
-      <button class="btn btn-ghost btn-full" onclick="closeModal('modal-gm-pa')" style="margin-top:8px">Cancel</button>`;
+    if(hasRunners || gmEditingEventIdx !== null){
+      html += `<div style="margin-bottom:12px">
+        <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Runner Movement</div>`;
+      runnerList.forEach(({pid, base})=>{
+        const rp = gmDb.roster.find(r=>r.id===pid);
+        const rname = (pid===batterId||pid==='_batter') ? 'Batter' : (rp ? rp.name.split(' ')[0] : '?');
+        const curDest = gmPendingRunners[pid] || 'out';
+        const color = destColor[curDest]||'var(--text2)';
+        const safePid = pid.replace(/'/g,"\\'");
+        html += `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)">
+          <div style="flex:1;font-size:13px;font-weight:700;color:var(--text)">${rname}<span style="color:var(--text2);font-weight:500;font-size:11px"> (${base})</span></div>
+          <div style="font-size:13px;font-weight:800;color:${color};min-width:54px;text-align:right">${destLabel[curDest]||curDest}</div>
+          <button onclick="gmCycleRunnerDest('${safePid}')" style="background:rgba(255,255,255,.08);border:1px solid var(--border2);color:var(--text2);padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap">Change</button>
+        </div>`;
+      });
+      html += `</div>`;
+    }
   }
+
+  // ── Count ─────────────────────────────────────────────────────────────────
+  html += `<div class="fgrp" style="margin-bottom:10px">
+    <label class="flbl">Count (optional, e.g. 2-2)</label>
+    <input class="finput" id="gm-pa-count" value="${gmPendingCount||''}" placeholder="0-0, 1-2…" maxlength="6" oninput="gmPendingCount=this.value">
+  </div>`;
+
+  // ── AB Details separator ───────────────────────────────────────────────────
+  html += `<div class="detail-sep" style="margin:10px 0 8px">
+    <div class="detail-sep-line"></div>
+    <div class="detail-sep-lbl">AB Details</div>
+    <div class="detail-sep-line"></div>
+  </div>`;
+
+  // Direction
+  html += `<div class="drow" id="gm-drow-dir">
+    <div class="drow-lbl">Direction</div>
+    <div class="dpicks">
+      ${pill('dir','pull','◀','Pull',gmPendingDir)}
+      ${pill('dir','center','▲','Center',gmPendingDir)}
+      ${pill('dir','oppo','▶','Oppo',gmPendingDir)}
+    </div>
+  </div>`;
+
+  // Trajectory
+  html += `<div class="drow" id="gm-drow-traj">
+    <div class="drow-lbl">Trajectory</div>
+    <div class="dpicks">
+      ${pill('traj','gb','↘','GB',gmPendingTraj)}
+      ${pill('traj','ld','→','Line Drive',gmPendingTraj)}
+      ${pill('traj','fb','↗','Fly Ball',gmPendingTraj)}
+      ${pill('traj','pu','↑','Pop Up',gmPendingTraj)}
+    </div>
+  </div>`;
+
+  // Contact
+  html += `<div class="drow" id="gm-drow-contact">
+    <div class="drow-lbl">Contact Quality</div>
+    <div class="dpicks">
+      ${pill('contact','barrel','🎯','Barrel',gmPendingContact)}
+      ${pill('contact','solid','✓','Solid',gmPendingContact)}
+      ${pill('contact','weak','✗','Weak',gmPendingContact)}
+      ${pill('contact','check','🔁','Check Swing',gmPendingContact)}
+    </div>
+  </div>`;
+
+  // Pitch quality
+  html += `<div class="drow" id="gm-drow-pitch">
+    <div class="drow-lbl">Pitch / AB</div>
+    <div class="dpicks" style="flex-wrap:wrap">
+      ${pill('pitch','good','✓','Good Pitch',gmPendingPitch)}
+      ${pill('pitch','bad','✗','Chased',gmPendingPitch)}
+      ${pill('pitch','firstpitch','1️⃣','1st Pitch',gmPendingPitch)}
+      ${pill('pitch','deepcount','📊','Deep Count',gmPendingPitch)}
+    </div>
+  </div>`;
+
+  // Pitches seen
+  html += `<div class="drow" id="gm-drow-pitches">
+    <div class="drow-lbl">Pitches Seen</div>
+    <div style="display:flex;align-items:center;gap:0;background:#13151F;border:1.5px solid var(--border2);border-radius:11px;overflow:hidden;width:fit-content">
+      <button onclick="gmAdjPAPitches(-1)" style="background:none;border:none;color:var(--text2);font-size:22px;font-weight:300;padding:7px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent">−</button>
+      <div id="gm-pa-pitch-display" style="font-size:20px;font-weight:800;color:var(--text);min-width:34px;text-align:center">${gmPendingPitches||0}</div>
+      <button onclick="gmAdjPAPitches(1)" style="background:none;border:none;color:var(--g);font-size:22px;font-weight:300;padding:7px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent">+</button>
+    </div>
+  </div>`;
+
+  // Notes
+  const savedNote = (gmEditingEventIdx !== null && ag.events[gmEditingEventIdx]) ? (ag.events[gmEditingEventIdx].note||'') : '';
+  html += `<div class="drow" id="gm-drow-notes">
+    <div class="drow-lbl">Notes (optional)</div>
+    <textarea class="finput" id="gm-pa-note" rows="2" maxlength="200" placeholder="e.g. Roped it to the gap, bad call at 1st…" style="resize:none;font-size:14px;padding:10px 12px">${savedNote}</textarea>
+  </div>`;
+
+  // Actions
+  const logBtnCls = isOut ? 'btn-red' : 'btn-g';
+  html += `<button class="btn ${logBtnCls} btn-full btn-lg" style="margin-top:4px" onclick="gmConfirmPA()">Log It ✓</button>
+    <button class="btn btn-ghost btn-full" onclick="closeModal('modal-gm-pa')" style="margin-top:8px">Cancel</button>`;
 
   document.getElementById('gm-pa-content').innerHTML = html;
 }
@@ -3578,6 +3715,8 @@ function gmConfirmPA(){
 
   const countEl = document.getElementById('gm-pa-count');
   const count = countEl ? countEl.value.trim() : '';
+  const noteEl = document.getElementById('gm-pa-note');
+  const note = noteEl ? noteEl.value.trim() : '';
 
   // Clean up runners map: rename _batter key to actual batterId if needed
   const cleanRunners = {};
@@ -3594,7 +3733,13 @@ function gmConfirmPA(){
     runners: cleanRunners,
     count: count||null,
     details: {...gmPendingDetails},
-    inning: st.inning
+    inning: st.inning,
+    dir:     gmPendingDir     || null,
+    traj:    gmPendingTraj    || null,
+    contact: gmPendingContact || null,
+    pitch:   gmPendingPitch   || null,
+    pitches: gmPendingPitches || null,
+    note:    note             || null,
   };
 
   if(gmEditingEventIdx !== null){
@@ -3605,9 +3750,14 @@ function gmConfirmPA(){
     toast(gmResultLabel(gmPendingResult));
   }
 
-  gmPendingResult = null;
+  gmPendingResult  = null;
   gmPendingRunners = {};
-  gmPendingCount = '';
+  gmPendingCount   = '';
+  gmPendingDir     = null;
+  gmPendingTraj    = null;
+  gmPendingContact = null;
+  gmPendingPitch   = null;
+  gmPendingPitches = 0;
   gmEditingEventIdx = null;
   saveGM();
   closeModal('modal-gm-pa');
