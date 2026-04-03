@@ -795,6 +795,24 @@
   </div>
 </div>
 
+<!-- MODAL: Edit Personal Game -->
+<div id="modal-edit-game" class="mover hide" onclick="closeModalOnBg(event,'modal-edit-game')">
+  <div class="modal">
+    <button class="mclose" onclick="closeModal('modal-edit-game')">✕</button>
+    <h2>Edit Game</h2>
+    <input type="hidden" id="edit-game-id">
+    <div class="fgrp">
+      <label class="flbl">Opponent</label>
+      <input class="finput" id="edit-game-opponent" type="text" placeholder="e.g. Thunder Hawks" maxlength="40">
+    </div>
+    <div class="fgrp">
+      <label class="flbl">Position</label>
+      <div class="posgrid" id="pos-grid-edit-game"></div>
+    </div>
+    <button class="btn btn-g btn-full btn-lg mt12" onclick="saveEditGame()">Save Changes</button>
+  </div>
+</div>
+
 <!-- MODAL: Calendar -->
 <div id="modal-calendar" class="mover hide" onclick="closeModalOnBg(event,'modal-calendar')">
   <div class="modal">
@@ -1908,12 +1926,16 @@ function openGameDetail(id){
   const st = getScoreTotals(game);
   const hasScore = game.innings && (st.us||st.them);
   let html = `
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:${hasScore?'12px':'16px'}">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
       <div class="dot tc-${team.color||0}" style="width:44px;height:44px;font-size:16px">${team.name[0]}</div>
-      <div>
+      <div style="flex:1;min-width:0">
         <div style="font-size:18px;font-weight:800">${team.name}${game.opponent?` <span style="font-size:14px;font-weight:500;color:var(--text2)">vs. ${game.opponent}</span>`:''}</div>
         <div style="font-size:13px;color:var(--muted)">${formatDateFull(game.date)} · ${game.position}</div>
       </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:${hasScore?'12px':'16px'}">
+      <button class="btn btn-ghost btn-sm" style="flex:1" onclick="openEditGame('${game.id}')">✏️ Edit</button>
+      <button class="btn btn-red btn-sm" style="flex:1" onclick="deletePersonalGame('${game.id}')">🗑 Delete Game</button>
     </div>
     ${hasScore ? `
     <div style="display:flex;align-items:center;justify-content:center;gap:16px;padding:14px;background:linear-gradient(135deg,#1B2040,#13162A);border:1px solid rgba(74,222,128,.15);border-radius:12px;margin-bottom:16px">
@@ -1944,21 +1966,37 @@ function openGameDetail(id){
     </div>`;
 
   if(game.events.length){
-    html += `<div class="card-title">Play Log</div><div class="plog">`;
-    game.events.forEach(ev=>{
+    html += `<div class="card-title" style="margin-bottom:10px">Play Log</div><div class="plog">`;
+    game.events.forEach((ev,i)=>{
       if(ev.type==='bat'){
         const isHit=['1B','2B','3B','HR'].includes(ev.result);
         const isWalk=['BB','HBP'].includes(ev.result);
-        const cls=isHit?'bh':isWalk?'bw':'bo';
+        const isOut=['K','GO','FO','LO','SF'].includes(ev.result);
+        const cls=isHit?'bh':isWalk?'bw':isOut?'bo':'be';
         const extras=[];
         if(ev.rbis>0)extras.push(ev.rbis+' RBI');
         if(ev.scored)extras.push('Scored');
-        html+=`<div class="pentry"><div class="pbadge ${cls}">${ev.result}</div>
-          <div><div class="pmain">${batLabel(ev.result)}</div>${extras.length?`<div class="psub">${extras.join(' · ')}</div>`:''}</div></div>`;
-      } else {
+        if(ev.pitches)extras.push(ev.pitches+'p');
+        const chips=[];
+        if(ev.dir)chips.push(ev.dir);
+        if(ev.traj)chips.push(ev.traj);
+        if(ev.contact)chips.push(ev.contact);
+        html+=`<div class="pentry">
+          <div class="pbadge ${cls}">${ev.result}</div>
+          <div class="flex1">
+            <div class="pmain">${batLabel(ev.result)}${extras.length?' · <span class="psub-inline">'+extras.join(' · ')+'</span>':''}</div>
+            ${chips.length?`<div class="psub">${chips.join(' · ')}</div>`:''}
+            ${ev.note?`<div style="font-size:11px;color:var(--text2);margin-top:2px;font-style:italic">"${ev.note}"</div>`:''}
+          </div>
+          <button class="pundo" onclick="deletePersonalPlay('${game.id}',${i})" title="Delete">×</button>
+        </div>`;
+      } else if(ev.type==='field'){
         const cls=ev.play==='E'?'be':'bf';
-        html+=`<div class="pentry"><div class="pbadge ${cls}">${ev.play}</div>
-          <div><div class="pmain">${fieldLabel(ev.play)}</div></div></div>`;
+        html+=`<div class="pentry">
+          <div class="pbadge ${cls}">${ev.play}</div>
+          <div class="flex1"><div class="pmain">${fieldLabel(ev.play)}</div></div>
+          <button class="pundo" onclick="deletePersonalPlay('${game.id}',${i})" title="Delete">×</button>
+        </div>`;
       }
     });
     html += `</div>`;
@@ -1966,6 +2004,50 @@ function openGameDetail(id){
 
   document.getElementById('game-detail-content').innerHTML = html;
   openModal('modal-game');
+}
+
+function openEditGame(id){
+  const game = db.games.find(g=>g.id===id);
+  if(!game) return;
+  document.getElementById('edit-game-id').value = id;
+  document.getElementById('edit-game-opponent').value = game.opponent||'';
+  buildPosGrid('pos-grid-edit-game', game.position||'');
+  closeModal('modal-game');
+  openModal('modal-edit-game');
+}
+
+function saveEditGame(){
+  const id = document.getElementById('edit-game-id').value;
+  const game = db.games.find(g=>g.id===id);
+  if(!game) return;
+  game.opponent = (document.getElementById('edit-game-opponent').value||'').trim();
+  const pos = getSelectedPos('pos-grid-edit-game');
+  if(pos) game.position = pos;
+  save(db);
+  closeModal('modal-edit-game');
+  toast('Game updated ✓');
+  renderHome();
+  renderLog();
+}
+
+function deletePersonalGame(id){
+  if(!confirm('Delete this game? All plays will be permanently lost.')) return;
+  db.games = db.games.filter(g=>g.id!==id);
+  if(db.activeGameId===id) db.activeGameId=null;
+  save(db);
+  closeModal('modal-game');
+  toast('Game deleted');
+  renderHome();
+  renderLog();
+}
+
+function deletePersonalPlay(gameId, idx){
+  const game = db.games.find(g=>g.id===gameId);
+  if(!game||!game.events[idx]) return;
+  game.events.splice(idx,1);
+  save(db);
+  openGameDetail(gameId);
+  toast('Play removed');
 }
 
 // ─── STATS CALC ──────────────────────────────────────────────────────────────
