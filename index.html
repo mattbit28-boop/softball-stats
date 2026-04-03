@@ -3906,17 +3906,28 @@ function renderGMRoster(el){
   let html = `<div class="card"><div class="card-title">Roster — ${sorted.length} players</div>`;
   sorted.forEach(p=>{
     const st = gmPlayerSeasonStats(p.id);
+    const tags = p.tags||[];
+    const arcBadges = tags.map(t=>{
+      const arc = GM_ARCHETYPES.find(a=>a.key===t);
+      return arc ? `<span class="arc-badge" style="color:${arc.color};border-color:${arc.color}33">${arc.ico} ${arc.label}</span>` : '';
+    }).filter(Boolean).join('');
+    const scoutNote = p.scoutNote ? `<div style="font-size:11px;color:var(--text2);margin-top:3px;font-style:italic">"${p.scoutNote}"</div>` : '';
     html += `
-      <div class="gm-pitem">
-        <div class="gm-pnum">${p.number||'—'}</div>
-        <div class="gm-pinfo">
-          <div class="gm-pname">${p.name}</div>
-          <div class="gm-ppos">${p.position||'—'} · ${st.avg} AVG · ${st.hr} HR · ${st.rbi} RBI</div>
+      <div class="gm-pitem" style="flex-direction:column;align-items:stretch;gap:0;padding:12px 14px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="gm-pnum" style="flex-shrink:0">${p.number||'—'}</div>
+          <div class="gm-pinfo" style="flex:1;min-width:0">
+            <div class="gm-pname">${p.name}</div>
+            <div class="gm-ppos">${p.position||'—'} · ${st.avg} AVG · ${st.hr} HR · ${st.rbi} RBI</div>
+          </div>
+          <div style="display:flex;gap:5px;flex-shrink:0">
+            <button class="btn btn-ghost btn-sm" onclick="openGMRatingsModal('${p.id}')" title="Archetypes & Ratings">🏷️</button>
+            <button class="btn btn-ghost btn-sm" onclick="openGMEditPlayer('${p.id}')">Edit</button>
+            <button class="btn btn-red btn-sm" onclick="deleteGMPlayer('${p.id}')">Del</button>
+          </div>
         </div>
-        <div style="display:flex;gap:6px">
-          <button class="btn btn-ghost btn-sm" onclick="openGMEditPlayer('${p.id}')">Edit</button>
-          <button class="btn btn-red btn-sm" onclick="deleteGMPlayer('${p.id}')">Del</button>
-        </div>
+        ${arcBadges ? `<div class="arc-badge-row" style="margin-top:8px;padding-left:44px">${arcBadges}</div>` : ''}
+        ${scoutNote ? `<div style="padding-left:44px">${scoutNote}</div>` : ''}
       </div>`;
   });
   html += `</div>`;
@@ -4376,6 +4387,24 @@ const RATING_DEFS = [
   {key:'clutch',  label:'Clutch'},
 ];
 
+// Player archetypes — inform lineup lab insights and player pool display
+const GM_ARCHETYPES = [
+  {key:'leadoff',   label:'Leadoff',          ico:'⚡',  color:'#4ade80', hint:'Gets on base, fast — bat 1st or 2nd'},
+  {key:'power',     label:'Power Hitter',      ico:'💪',  color:'#f87171', hint:'HR threat, big RBI guy — bat 3rd–5th'},
+  {key:'contact',   label:'Contact Hitter',    ico:'🎯',  color:'#38bdf8', hint:'High AVG, rarely Ks — any spot in order'},
+  {key:'speed',     label:'Speed Burner',      ico:'🏃',  color:'#fbbf24', hint:'Takes extra bags, steals — top of order'},
+  {key:'cleanup',   label:'Cleanup / RBI',     ico:'🏅',  color:'#f87171', hint:'Drives runners in — bat 3rd–5th'},
+  {key:'tableset',  label:'Table Setter',      ico:'🍽️', color:'#38bdf8', hint:'Patient, works counts — bat 1st–3rd'},
+  {key:'anchor',    label:'Defensive Anchor',  ico:'⚓',  color:'#a78bfa', hint:'Elite defender — cornerstone of the field'},
+  {key:'clutch',    label:'Clutch',            ico:'🔥',  color:'#4ade80', hint:'Delivers under pressure — bat 3rd or late'},
+  {key:'utility',   label:'Utility',           ico:'🔧',  color:'#818cf8', hint:'Can cover multiple positions — great flex'},
+  {key:'veteran',   label:'Veteran',           ico:'🏆',  color:'#fb923c', hint:'Experience + leadership on the field'},
+  {key:'slapper',   label:'Slapper',           ico:'🏃‍♀️',color:'#fbbf24', hint:'Drag/slap — bat 1st or 2nd'},
+  {key:'smallball', label:'Small Ball',        ico:'🎲',  color:'#fbbf24', hint:'Bunt & hit-and-run specialist — top order'},
+  {key:'hot',       label:'Hot Streak',        ico:'🌶️', color:'#f87171', hint:'Playing great right now — capitalize'},
+  {key:'cold',      label:'Cold',              ico:'❄️',  color:'#93c5fd', hint:'Struggling lately — needs a confidence play'},
+];
+
 const FIELD_POSITIONS_LAYOUT = [
   {pos:'P',  x:50, y:55},
   {pos:'C',  x:50, y:88},
@@ -4449,35 +4478,96 @@ function gmLabInsights(){
 
   if(!roster.length) return insights;
 
-  // Best leadoff candidate (high OBP + speed rating)
+  const hasTag = (p, ...keys) => keys.some(k=>(p.tags||[]).includes(k));
+
+  // ── 1. Best Leadoff (speed/leadoff archetype + OBP + speed rating) ──────────
   const leadoffScores = roster.map(p=>{
     const st = gmPlayerSeasonStats(p.id);
     const r  = gmPlayerRatings(p);
-    return {p, score: (parseFloat(st.obp)||.3)*0.6 + (r.speed/10)*0.4};
+    const arcBonus = hasTag(p,'leadoff') ? .15 : hasTag(p,'speed','tableset','slapper') ? .07 : 0;
+    return {p, score: (parseFloat(st.obp)||.3)*.5 + (r.speed/10)*.3 + (r.iq/10)*.1 + arcBonus};
   }).sort((a,b)=>b.score-a.score);
   if(leadoffScores[0]){
-    const lc = leadoffScores[0];
-    const isLeadoff = lineup[0]===lc.p.id;
+    const {p: lc} = leadoffScores[0];
+    const isLeadoff = lineup[0]===lc.id;
+    const arcTags = (lc.tags||[]).filter(t=>['leadoff','speed','slapper','tableset'].includes(t));
     insights.push({ico:'⚡',title:'Best Leadoff Candidate',items:[
-      {text: lc.p.name, detail:`OBP ${gmPlayerSeasonStats(lc.p.id).obp} · Speed ${gmPlayerRatings(lc.p).speed}/10`, cls: isLeadoff?'ins-g':'ins-am', pill: isLeadoff?'In Spot 1':'Not Leading Off'}
+      {text: lc.name, detail:`OBP ${gmPlayerSeasonStats(lc.id).obp} · Speed ${gmPlayerRatings(lc).speed}/10${arcTags.length?' · '+arcTags.map(t=>GM_ARCHETYPES.find(a=>a.key===t)?.ico+''+t).join(', '):''}`, cls: isLeadoff?'ins-g':'ins-am', pill: isLeadoff?'✓ In Spot 1':'Not Leading Off'}
     ]});
   }
 
-  // Best cleanup hitter (power + HR)
+  // ── 2. Best Cleanup (power/cleanup archetype + power rating + HR) ────────────
   const cleanupScores = roster.map(p=>{
     const st = gmPlayerSeasonStats(p.id);
     const r  = gmPlayerRatings(p);
-    return {p, score: r.power*.6 + st.hr*.4 + (parseFloat(st.avg)||.25)*5};
+    const arcBonus = hasTag(p,'cleanup','power') ? 2 : hasTag(p,'clutch') ? 0.5 : 0;
+    return {p, score: r.power*.55 + (parseFloat(st.avg)||.25)*4 + (st.hr||0)*.4 + arcBonus};
   }).sort((a,b)=>b.score-a.score);
   if(cleanupScores[0]){
-    const cc = cleanupScores[0];
-    const isCleanup = lineup[3]===cc.p.id;
-    insights.push({ico:'💥',title:'Best Cleanup Hitter',items:[
-      {text: cc.p.name, detail:`Power ${gmPlayerRatings(cc.p).power}/10 · ${gmPlayerSeasonStats(cc.p.id).hr} HR`, cls: isCleanup?'ins-g':'ins-am', pill: isCleanup?'In Cleanup':'Not at 4'}
+    const {p: cc} = cleanupScores[0];
+    const isCleanup = lineup[3]===cc.id || lineup[4]===cc.id;
+    const slot = lineup.indexOf(cc.id)+1;
+    insights.push({ico:'💥',title:'Best Cleanup / Run Producer',items:[
+      {text: cc.name, detail:`Power ${gmPlayerRatings(cc).power}/10 · ${gmPlayerSeasonStats(cc.id).hr} HR · AVG ${gmPlayerSeasonStats(cc.id).avg}`, cls: isCleanup?'ins-g':'ins-am', pill: isCleanup?`✓ Batting ${slot}`:'Not in 3–5'}
     ]});
   }
 
-  // Weak defensive spots
+  // ── 3. Archetype-driven batting order notes ───────────────────────────────────
+  const orderNotes = [];
+  lineup.forEach((pid, i)=>{
+    const p = roster.find(r=>r.id===pid);
+    if(!p) return;
+    const slot = i+1;
+    const tags = p.tags||[];
+    // Power hitter leading off
+    if(i===0 && hasTag(p,'power','cleanup') && !hasTag(p,'leadoff','speed','tableset','slapper')){
+      orderNotes.push({text:`${p.name} leading off`, detail:'💪 Power hitter at top — consider moving to 3–5 spot', cls:'ins-am', pill:'Consider Move'});
+    }
+    // Leadoff/speed hitter batting late
+    if(i>=6 && hasTag(p,'leadoff','speed','slapper') && !hasTag(p,'power','cleanup')){
+      orderNotes.push({text:`${p.name} batting ${slot}`, detail:'⚡ Speed/leadoff type buried late in order', cls:'ins-am', pill:'Worth Moving Up'});
+    }
+    // Clutch/anchor batting very low
+    if(i>=8 && hasTag(p,'clutch','cleanup')){
+      orderNotes.push({text:`${p.name} batting ${slot}`, detail:'🔥 Clutch hitter at bottom — could be higher', cls:'ins-am', pill:'Consider Move'});
+    }
+    // Table setter batting too low
+    if(i>=5 && hasTag(p,'tableset') && !hasTag(p,'power')){
+      orderNotes.push({text:`${p.name} batting ${slot}`, detail:'🍽️ Table setter buried — works best in 1–3', cls:'ins-am', pill:'Move Up'});
+    }
+    // Hot streak — surface the info
+    if(hasTag(p,'hot')){
+      orderNotes.push({text:`${p.name} 🌶️ on fire`, detail:`Batting ${slot} — may want them in a high-leverage spot`, cls:'ins-g', pill:'Hot Streak'});
+    }
+    // Cold player batting in top 4
+    if(i<=3 && hasTag(p,'cold')){
+      orderNotes.push({text:`${p.name} ❄️ running cold`, detail:`Batting ${slot} — consider dropping while they work through it`, cls:'ins-red', pill:'Cold Streak'});
+    }
+  });
+  if(orderNotes.length){
+    insights.push({ico:'📋',title:'Batting Order Notes',items:orderNotes.slice(0,5)});
+  }
+
+  // ── 4. Archetype roster summary (who's tagged, who's not) ────────────────────
+  const untagged = roster.filter(p=>!(p.tags||[]).length);
+  if(untagged.length){
+    insights.push({ico:'🏷️',title:'Players Without Archetypes',items:
+      untagged.map(p=>({text:p.name, detail:'Tap ✏️ in the player pool or 🏷️ on the roster to tag', cls:'ins-am', pill:'No Tags'}))
+    });
+  }
+
+  // ── 5. Hot / Cold streak roster alerts ──────────────────────────────────────
+  const hotPlayers = roster.filter(p=>hasTag(p,'hot'));
+  const coldPlayers = roster.filter(p=>hasTag(p,'cold'));
+  if(hotPlayers.length||coldPlayers.length){
+    const streakItems = [
+      ...hotPlayers.map(p=>({text:`🌶️ ${p.name}`,  detail:'Hot streak — get them in premium lineup slots', cls:'ins-g',  pill:'🔥 Hot'})),
+      ...coldPlayers.map(p=>({text:`❄️ ${p.name}`, detail:'Cold stretch — consider confidence at-bats or drop order', cls:'ins-red', pill:'❄️ Cold'})),
+    ];
+    insights.push({ico:'📈',title:'Streak Watch',items:streakItems});
+  }
+
+  // ── 6. Weak defensive spots (position fit) ────────────────────────────────────
   const weakSpots = [];
   FIELD_POSITIONS_LAYOUT.forEach(({pos})=>{
     const pid = Object.keys(field).find(k=>field[k]===pos);
@@ -4487,54 +4577,55 @@ function gmLabInsights(){
       const p = roster.find(r=>r.id===pid);
       if(p){
         const fit = getPosFit(p.position||'', pos);
-        if(fit==='bad') weakSpots.push({text:`${p.name} at ${pos}`, detail:`Natural position: ${p.position||'?'}`, cls:'ins-red', pill:'Out of Pos'});
+        if(fit==='bad') weakSpots.push({text:`${p.name} at ${pos}`, detail:`Natural pos: ${p.position||'?'} — significant stretch`, cls:'ins-red', pill:'Out of Pos'});
         else if(fit==='ok') weakSpots.push({text:`${p.name} at ${pos}`, detail:`Stretch from ${p.position||'?'}`, cls:'ins-am', pill:'Stretch'});
+        // Anchor archetype playing out of position
+        if(hasTag(p,'anchor') && fit==='bad'){
+          weakSpots.push({text:`${p.name} ⚓ Anchor at ${pos}`, detail:'Your best defender misplaced — move to their natural spot', cls:'ins-red', pill:'Misplaced!'});
+        }
       }
     }
   });
   if(weakSpots.length){
-    insights.push({ico:'🛡',title:'Defensive Notes',items:weakSpots.slice(0,4)});
+    insights.push({ico:'🛡',title:'Defensive Notes',items:weakSpots.slice(0,5)});
   }
 
-  // Strongest outfield combo (LF / LC / RC / RF)
+  // ── 7. Best outfield 4 (range + glove + arm + OF archetype) ──────────────────
   const ofCandidates = roster.map(p=>{
     const r = gmPlayerRatings(p);
     const isNaturalOF = ['LF','LC','RC','RF','OF'].includes(p.position||'');
-    return {p, score: r.range*.4 + r.glove*.35 + r.arm*.15 + (isNaturalOF?.1:0)*10};
+    const anchorBonus = hasTag(p,'anchor') ? 1 : 0;
+    return {p, score: r.range*.4 + r.glove*.3 + r.arm*.2 + (isNaturalOF?1:0) + anchorBonus};
   }).sort((a,b)=>b.score-a.score).slice(0,4);
   if(ofCandidates.length>=3){
-    insights.push({ico:'🌿',title:'Best Outfield 4 (LF·LC·RC·RF)',items:
-      ofCandidates.map(({p,score})=>({text:p.name, detail:`Range ${gmPlayerRatings(p).range} · Glove ${gmPlayerRatings(p).glove} · Arm ${gmPlayerRatings(p).arm}`, cls:'ins-blue', pill:`${Math.round(score)}/10`}))
+    insights.push({ico:'🌿',title:'Best Outfield 4 (LF · LC · RC · RF)',items:
+      ofCandidates.map(({p,score})=>{
+        const hasAnchor = hasTag(p,'anchor') ? ' ⚓' : '';
+        return {text:p.name+hasAnchor, detail:`Range ${gmPlayerRatings(p).range} · Glove ${gmPlayerRatings(p).glove} · Arm ${gmPlayerRatings(p).arm}`, cls:'ins-blue', pill:`Score ${score.toFixed(1)}`};
+      })
     });
   }
 
-  // Players batting out of optimal position
-  const outOfSlot = [];
-  lineup.forEach((pid,i)=>{
-    const p = roster.find(r=>r.id===pid);
-    if(!p) return;
-    const r = gmPlayerRatings(p);
-    const tags = p.tags||[];
-    if(i===0 && tags.includes('power') && !tags.includes('leadoff') && !tags.includes('speed')){
-      outOfSlot.push({text:`${p.name} leading off`, detail:'Power hitter — consider lower', cls:'ins-am', pill:'Consider Move'});
+  // ── 8. Utility / flex players available ──────────────────────────────────────
+  const utilPlayers = roster.filter(p=>hasTag(p,'utility','veteran'));
+  if(utilPlayers.length){
+    const unassignedUtil = utilPlayers.filter(p=>!lineup.includes(p.id));
+    if(unassignedUtil.length){
+      insights.push({ico:'🔧',title:'Utility / Flex Available',items:
+        unassignedUtil.map(p=>({text:p.name, detail:`${p.position||'?'} — can fill multiple spots`, cls:'ins-blue', pill: hasTag(p,'veteran')?'🏆 Vet':'🔧 Util'}))
+      });
     }
-    if(i>=7 && (tags.includes('anchor') || tags.includes('clutch'))){
-      outOfSlot.push({text:`${p.name} batting ${i+1}`, detail:'Your anchor/clutch hitter bats late', cls:'ins-am', pill:'Worth Moving Up'});
-    }
-  });
-  if(outOfSlot.length){
-    insights.push({ico:'📋',title:'Batting Order Notes',items:outOfSlot});
   }
 
-  // G2 suggestion
+  // ── 9. G2 shuffle suggestion ─────────────────────────────────────────────────
   if(gmDb.games && gmDb.games.length){
     const lastGame = [...gmDb.games].filter(g=>g.status==='final').sort((a,b)=>b.date-a.date)[0];
     if(lastGame){
       const st = gmDeriveState(lastGame);
-      const totals = {us:st.innings.reduce((s,i)=>s+(i.us||0),0)};
+      const totals = {us: st.innings.reduce((s,i)=>s+(i.us||0),0)};
       if(totals.us < 5){
-        insights.push({ico:'🔄',title:'Game 2 Consideration',items:[
-          {text:'Low run output last game', detail:`Only ${totals.us} runs scored — consider shuffling order`, cls:'ins-am', pill:'G2 Change?'}
+        insights.push({ico:'🔄',title:'G2 Shuffle Suggestion',items:[
+          {text:'Low run output last game', detail:`Only ${totals.us} runs — move your hot hitters up and cold ones down`, cls:'ins-am', pill:'G2 Change?'}
         ]});
       }
     }
@@ -4611,7 +4702,12 @@ function gmPlayerPoolHTML(assignedSet){
     const isSelected = gmLabSelectedPid === p.id;
     const isAssigned = assignedSet && assignedSet.has(p.id);
     const tags = p.tags || [];
-    const tagHTML = tags.slice(0,2).map(t=>`<span class="ptag ptag-${t}">${t}</span>`).join('');
+    const tagHTML = tags.slice(0,2).map(t=>{
+      const arc = GM_ARCHETYPES.find(a=>a.key===t);
+      return arc
+        ? `<span class="ptag" style="background:${arc.color}18;color:${arc.color}">${arc.ico} ${arc.label}</span>`
+        : `<span class="ptag ptag-${t}">${t}</span>`;
+    }).join('');
     html += `<div class="ppool-card${isSelected?' selected':''}${isAssigned&&!isSelected?' is-assigned':''}" onclick="gmLabSelectPlayer('${p.id}')">
       <button class="ppool-edit-btn" onclick="event.stopPropagation();openGMRatingsModal('${p.id}')">✏️</button>
       <div class="ppool-num">#${p.number||'—'}</div>
@@ -4658,7 +4754,7 @@ function gmLabLineupHTML(){
       <div style="flex:1;min-width:0">
         ${isFilled?`
           <div class="bo-role">${role}</div>
-          <div class="bo-pname">${p.name}</div>
+          <div class="bo-pname">${p.name}${(p.tags||[]).slice(0,2).map(t=>{const a=GM_ARCHETYPES.find(x=>x.key===t);return a?` <span style="font-size:10px;color:${a.color}">${a.ico}</span>`:''}).join('')}</div>
           <div class="bo-pstats">${st.avg} AVG · ${st.obp} OBP · ${st.hr} HR${p.position?' · '+p.position:''}</div>
         `:`
           <div class="bo-role">${role}</div>
@@ -4679,18 +4775,33 @@ function gmLabLineupHTML(){
 function gmLabBattingFit(p, slotIdx){
   const tags = p.tags || [];
   const r = gmPlayerRatings(p);
-  if(slotIdx===0){
-    if(tags.includes('leadoff')||tags.includes('speed')||(r.speed>=7&&r.contact>=7)) return 'great';
-    if(tags.includes('anchor')||tags.includes('power')) return 'bad';
+  const hasT = (...keys) => keys.some(k=>tags.includes(k));
+  // Slots 0–1: Leadoff / table-setter zone
+  if(slotIdx<=1){
+    if(hasT('leadoff','speed','tableset','slapper')) return 'great';
+    if(hasT('power','cleanup') && !hasT('leadoff','contact')) return 'bad';
+    if(r.speed>=7 && r.contact>=7) return 'great';
     return 'ok';
   }
-  if(slotIdx===3){
-    if(tags.includes('power')||(r.power>=7&&r.contact>=6)) return 'great';
-    if(tags.includes('leadoff')&&!tags.includes('power')) return 'ok';
+  // Slots 2–4: Middle of the order / power zone
+  if(slotIdx>=2 && slotIdx<=4){
+    if(hasT('power','cleanup','clutch')) return 'great';
+    if(hasT('leadoff','slapper','smallball') && !hasT('contact','power')) return 'ok';
+    if(r.power>=7 && r.contact>=6) return 'great';
     return 'ok';
   }
-  if(slotIdx===1||slotIdx===2){
+  // Slots 5–6: Contact / RBI support
+  if(slotIdx===5||slotIdx===6){
+    if(hasT('contact','tableset','clutch')) return 'great';
+    if(hasT('power')) return 'ok';
     if(r.contact>=7) return 'great';
+    return 'ok';
+  }
+  // Slots 7–9: Bottom of order
+  if(slotIdx>=7){
+    if(hasT('utility','veteran','smallball')) return 'great';
+    if(hasT('power','cleanup') && !hasT('cold')) return 'ok';
+    if(hasT('cold')) return 'bad';
     return 'ok';
   }
   return 'ok';
@@ -4989,16 +5100,24 @@ let gmEditingRatingsTags = [];
 function openGMRatingsModal(pid){
   const p = gmDb.roster.find(r=>r.id===pid);
   if(!p) return;
-  document.getElementById('gm-ratings-title').textContent = `${p.name} — Ratings`;
+  document.getElementById('gm-ratings-title').textContent = `${p.name}`;
   document.getElementById('gm-ratings-pid').value = pid;
   document.getElementById('gm-ratings-note').value = p.scoutNote||'';
   gmEditingRatingsTags = [...(p.tags||[])];
 
-  // Tags
-  document.querySelectorAll('#gm-tags-grid .tag-pill').forEach(btn=>{
-    const t = btn.dataset.tag;
-    btn.classList.toggle('sel', gmEditingRatingsTags.includes(t));
+  // Build archetype grid from GM_ARCHETYPES constant
+  let arcHTML = '';
+  GM_ARCHETYPES.forEach(({key, label, ico, color, hint})=>{
+    const sel = gmEditingRatingsTags.includes(key);
+    arcHTML += `<button class="arc-pill${sel?' sel':''}" style="color:${color}" data-arc="${key}" onclick="toggleGMTag(this,'${key}')">
+      <div class="arc-pill-ico">${ico}</div>
+      <div class="arc-pill-txt">
+        <span class="arc-pill-name">${label}</span>
+        <span class="arc-pill-hint">${hint}</span>
+      </div>
+    </button>`;
   });
+  document.getElementById('gm-tags-grid').innerHTML = arcHTML;
 
   // Sliders
   const r = gmPlayerRatings(p);
@@ -5016,11 +5135,11 @@ function openGMRatingsModal(pid){
 }
 
 function toggleGMTag(btn, tag){
-  btn.classList.toggle('sel');
-  if(gmEditingRatingsTags.includes(tag)){
-    gmEditingRatingsTags = gmEditingRatingsTags.filter(t=>t!==tag);
+  const nowSel = btn.classList.toggle('sel');
+  if(nowSel){
+    if(!gmEditingRatingsTags.includes(tag)) gmEditingRatingsTags.push(tag);
   } else {
-    gmEditingRatingsTags.push(tag);
+    gmEditingRatingsTags = gmEditingRatingsTags.filter(t=>t!==tag);
   }
 }
 
@@ -5037,7 +5156,9 @@ function saveGMRatings(){
   });
   saveGM();
   closeModal('modal-gm-ratings');
-  renderGMStrategy();
+  const el = document.getElementById('gmContent');
+  if(gmCurrentTab==='roster') renderGMRoster(el);
+  else renderGMStrategy(el);
   toast(`${p.name} updated!`);
 }
 
